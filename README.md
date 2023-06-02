@@ -5,7 +5,7 @@ A riscv operating system written in rust.
 ## Requirements
 - [rust](https://www.rust-lang.org/tools/install)
 - [qemu](https://www.qemu.org/download/)
-- [riscv-gnu-toolchain](https://github.com/riscv-collab/riscv-gnu-toolchain)
+- [riscv-gnu-toolchain](https://github.com/riscv-collab/riscv-gnu-toolchain) (optional)
 
 After installing rust, you need to install the `riscv64gc-unknown-none-elf` target:
 
