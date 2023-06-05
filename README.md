@@ -25,8 +25,17 @@ brew install riscv-gnu-toolchain
 ## Run
 
 ```bash
-cargo run
+cargo run --release
 ```
+
+Debugging with gdb:
+
+```bash
+./debug.sh
+riscv64-unknown-elf-gdb # in another terminal
+```
+
+
 
 ## Features(Goal)
 - process manage and context switch

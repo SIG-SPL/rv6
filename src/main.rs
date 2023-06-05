@@ -1,13 +1,12 @@
 #![no_std]
 #![no_main]
-#![allow(clippy::while_immutable_condition)]
+#![feature(panic_info_message)]
 
-mod device;
+mod console;
+mod sbi;
 
 use core::arch::global_asm;
 use core::panic::PanicInfo;
-
-static HELLO: &str = "Hello RV6!\n";
 
 global_asm!(include_str!("asm/start.S"));
 global_asm!(include_str!("asm/trap.S"));
@@ -15,13 +14,23 @@ global_asm!(include_str!("asm/swich.S"));
 
 #[no_mangle]
 pub extern "C" fn os_main() -> ! {
-    print!("{}", HELLO);
-    loop {}
+    println!("Hello, RV6!");
+    panic!("It should shutdown!")
 }
 
-/// This function is called on panic.
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
-    println!("{}", _info);
-    loop {}
+fn panic(info: &PanicInfo) -> ! {
+    // print red error
+    print!("\x1b[1;31mError: \x1b[0m");
+    if let Some(location) = info.location() {
+        println!(
+            "Panicked at {}:{} {}",
+            location.file(),
+            location.line(),
+            info.message().unwrap()
+        );
+    } else {
+        println!("Panicked: {}", info.message().unwrap());
+    }
+    crate::sbi::shutdown()
 }

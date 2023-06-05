@@ -1,16 +1,12 @@
-.equ STACK_SIZE, 8192
-
-.global _start
-
+    .section .text.entry
+    .globl _start
 _start:
-    csrr a0, mhartid                
-    bnez a0, park                   
-    la   sp, stacks + STACK_SIZE    
-    j    os_main                    
+    la sp, boot_stack_top
+    call os_main 
 
-park:
-    wfi
-    j park
-
-stacks:
-    .skip STACK_SIZE                
+    .section .bss.stack
+    .globl boot_stack_lower_bound
+boot_stack_lower_bound:
+    .space 4096 * 16
+    .globl boot_stack_top
+boot_stack_top:
