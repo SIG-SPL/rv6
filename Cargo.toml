@@ -12,3 +12,7 @@ panic = "abort" # disable stack unwinding on panic
 # the profile used for `cargo build --release`
 [profile.release]
 panic = "abort" # disable stack unwinding on panic
+
+[dependencies]
+log = "0.4.18"
+riscv = "0.10.1"

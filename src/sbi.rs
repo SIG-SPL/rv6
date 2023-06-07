@@ -1,7 +1,7 @@
-//src/sbi.rs
+//! src/sbi.rs
+#![allow(dead_code)]
 
 use core::arch::asm;
-#[allow(unused)]
 
 // legacy extensions: ignore fid
 const SBI_SET_TIMER: usize = 0;
@@ -23,11 +23,11 @@ fn sbi_call(eid: usize, fid: usize, arg0: usize, arg1: usize, arg2: usize) -> us
     unsafe {
         asm!(
             "ecall",
-            inlateout("x10") arg0 => ret,
-            in("x11") arg1,
-            in("x12") arg2,
-            in("x16") fid,
-            in("x17") eid,
+            inlateout("a0") arg0 => ret,
+            in("a1") arg1,
+            in("a2") arg2,
+            in("a6") fid,
+            in("a7") eid,
         );
     }
     ret
