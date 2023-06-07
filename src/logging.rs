@@ -36,6 +36,7 @@ pub fn init() {
         Some("INFO") => LevelFilter::Info,
         Some("DEBUG") => LevelFilter::Debug,
         Some("TRACE") => LevelFilter::Trace,
+        // default log level is debug
         _ => LevelFilter::Debug,
     });
 }

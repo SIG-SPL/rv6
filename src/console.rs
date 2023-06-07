@@ -26,3 +26,8 @@ macro_rules! println {
     () => ($crate::print!("\n"));
     ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
 }
+
+#[test_case]
+fn test_println() {
+    print!("test_println output");
+}

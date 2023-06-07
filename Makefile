@@ -17,6 +17,7 @@ debug:
 		-s -S
 
 test:
+	@cargo test
 
 clean:
 	@cargo clean

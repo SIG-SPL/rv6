@@ -12,7 +12,6 @@
 __trap:
     # csrrw sp, sscratch, sp
     # now sp->kernel stack, sscratch->user stack
-    # allocate a TrapContext on kernel stack
     addi sp, sp, -(32+3)*8
     # save general-purpose registers
     sd x1, 1*8(sp)
@@ -22,7 +21,6 @@ __trap:
         SAVE_GP %n
         .set n, n+1
     .endr
-    # we can use t0/t1/t2 freely, because they were saved on kernel stack
     csrr t0, sstatus
     csrr t1, sepc
     csrr t2, scause
@@ -31,8 +29,6 @@ __trap:
     sd t2, 34*8(sp)
     # read user stack from sscratch and save it on the kernel stack
     # csrr t2, sscratch
-    # sd t2, 2*8(sp)
-    # set input argument of trap_handler(cx: &mut TrapContext)
     mv a0, sp
     call trap_handler
 
@@ -43,18 +39,15 @@ __restore:
     ld t0, 32*8(sp)
     ld t1, 33*8(sp)
     ld t2, 34*8(sp)
-    # ld t2, 2*8(sp)
     csrw sstatus, t0
     csrw sepc,    t1
     csrw scause,  t2
-    # restore general-purpuse registers except sp/tp
     ld x1, 1*8(sp)
     .set n, 3
     .rept 29
         LOAD_GP %n
         .set n, n+1
     .endr
-    # release TrapContext on kernel stack
     addi sp, sp, (32+3)*8
     # now sp->kernel stack, sscratch->user stack
     # csrrw sp, sscratch, sp

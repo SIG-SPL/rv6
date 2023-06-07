@@ -1,5 +1,5 @@
-use riscv::register::stvec; 
-use riscv::register::scause::{self, Trap, Exception, Interrupt};
+use riscv::register::scause::{self, Exception, Interrupt, Trap};
+use riscv::register::stvec;
 pub type Reg = usize;
 
 #[repr(C)]

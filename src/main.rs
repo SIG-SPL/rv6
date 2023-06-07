@@ -1,34 +1,28 @@
 #![no_std]
 #![no_main]
 #![feature(panic_info_message)]
+#![feature(custom_test_frameworks)]
+#![test_runner(rv6::test_runner)]
+#![reexport_test_harness_main = "test_main"]
 
-#[macro_use]
-mod console;
-mod context;
-mod logging;
-mod sbi;
-
-#[macro_use]
-extern crate log;
-
-use core::arch::global_asm;
 use core::panic::PanicInfo;
-
-global_asm!(include_str!("asm/start.S"));
-global_asm!(include_str!("asm/trap.S"));
-global_asm!(include_str!("asm/swich.S"));
+use log::{error, info};
+use rv6::{context, logging};
 
 #[no_mangle]
 pub extern "C" fn os_main() -> ! {
+    #[cfg(test)]
+    test_main();
+
     logging::init();
     context::trap_init();
     info!("Hello, RV6!");
     panic!("It should shutdown!")
 }
 
+#[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    // print red error
     if let Some(location) = info.location() {
         error!(
             "Panicked at {}:{} {}",
@@ -39,5 +33,11 @@ fn panic(info: &PanicInfo) -> ! {
     } else {
         error!("Panicked: {}", info.message().unwrap());
     }
-    crate::sbi::shutdown()
+    rv6::sbi::shutdown()
+}
+
+#[cfg(test)]
+#[panic_handler]
+fn panic(info: &PanicInfo) -> ! {
+    rv6::test_panic_handler(info)
 }
