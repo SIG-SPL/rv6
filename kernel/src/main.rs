@@ -6,8 +6,13 @@
 #![reexport_test_harness_main = "test_main"]
 #![allow(clippy::empty_loop)]
 
-use core::panic::PanicInfo;
+use core::{arch::asm, panic::PanicInfo};
 use kernel::{logging, trap};
+
+#[no_mangle]
+pub fn loop_print() -> ! {
+    loop {}
+}
 
 #[no_mangle]
 pub extern "C" fn os_main() -> ! {
@@ -16,7 +21,11 @@ pub extern "C" fn os_main() -> ! {
 
     trap::init();
     logging::init();
-    log::info!("Hello, RV6!");
+    unsafe {
+        // set sepc to loop_print and sret
+        riscv::register::sepc::write(loop_print as usize);
+        asm!("sret")
+    }
     loop {}
 }
 

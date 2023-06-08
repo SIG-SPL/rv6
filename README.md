@@ -39,7 +39,7 @@ riscv64-unknown-elf-gdb # in another terminal
 - [ ] process manage and context switch
 - [ ] system call like xv6's
 - [ ] simple crash-free filesystem like xv6's
-- [ ] simple bootstrap compiler running inside the os(so we have everything in principle)
+- [ ] **simple bootstrap compiler running inside the os(so we have everything in principle)**
 - [ ] simple GUI
 
 

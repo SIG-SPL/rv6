@@ -1,4 +1,5 @@
 use crate::context::TrapFrame;
+use crate::syscall::do_syscall;
 use core::arch::global_asm;
 use riscv::register::scause::{self, Exception, Interrupt, Trap};
 use riscv::register::{sie, stvec};
@@ -6,21 +7,27 @@ use riscv::register::{sie, stvec};
 global_asm!(include_str!("asm/trap.S"));
 
 #[no_mangle]
-pub fn trap_handler(cx: &mut TrapFrame) {
+pub fn trap_handler(cx: &mut TrapFrame) -> &mut TrapFrame {
     let scause = scause::read();
-
+    assert_eq!(scause.bits(), cx.scause, "scause not equal before and after interrupt");
     match scause.cause() {
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
-            println!("current time: {}", timer::get_time_ms());
+            debug!("catch timer interrupt current time: {}", timer::get_time_ms());
             timer::set_next_trigger();
-            cx.sepc += 4;
+        }
+        Trap::Exception(Exception::UserEnvCall) => {
+            do_syscall(cx);
+            debug!("ecall from user mode");
         }
         Trap::Exception(Exception::IllegalInstruction) => {
             panic!("IllegalInstruction")
         }
         _ => panic!("unhandled trap {:?}\n{:#x?}", scause.cause(), cx),
     }
-    todo!("Handle trap here!")
+    if scause.is_exception() {
+        cx.sepc += 4;
+    }
+    cx
 }
 
 pub fn init() {
@@ -54,5 +61,4 @@ mod timer {
         let time = get_time();
         crate::sbi::set_timer(time + CLOCK_FREQ / TICKS_PER_SEC);
     }
-    
 }

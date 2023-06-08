@@ -1,10 +1,10 @@
 GDB=riscv64-unknown-elf-gdb
 BIOS=rustsbi-qemu.bin
-QEMU = qemu-system-riscv64
+QEMU=qemu-system-riscv64
 DEBUGTARGET=./target/riscv64gc-unknown-none-elf/debug/kernel
 
 run: 
-	@cargo run --release
+	@cargo run --release --bin kernel
 
 debug: 
 	@cargo build

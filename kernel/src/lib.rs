@@ -8,18 +8,22 @@ use core::arch::global_asm;
 use core::panic::PanicInfo;
 
 global_asm!(include_str!("asm/start.S"));
-
-global_asm!(include_str!("asm/swich.S"));
+global_asm!(include_str!("asm/swtch.S"));
 
 #[macro_use]
+mod context;
+#[macro_use]
 pub mod console;
-pub mod context;
+mod loader;
 pub mod logging;
 pub mod sbi;
+mod syscall;
 pub mod trap;
+
+#[macro_use]
 extern crate log;
 
-pub use context::TrapFrame;
+pub use context::{TrapFrame, Context};
 
 pub trait Testable {
     fn run(&self);
@@ -38,7 +42,7 @@ where
 
 pub fn test_runner(tests: &[&dyn Testable]) {
     // println!(
-    //     r" 
+    //     r"
     //      _____         _     _  __                    _
     //     |_   _|__  ___| |_  | |/ /___ _ __ _ __   ___| |
     //       | |/ _ \/ __| __| | ' // _ \ '__| '_ \ / _ \ |

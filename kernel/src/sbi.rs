@@ -43,6 +43,5 @@ pub fn shutdown() -> ! {
 }
 
 pub fn set_timer(time: usize) {
-    let ret = sbi_call(SBI_SET_TIMER, 0, time, 0, 0);
-    println!("sbi_set_timer: ret = {}", ret);
+    sbi_call(SBI_SET_TIMER, 0, time, 0, 0);
 }
