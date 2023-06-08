@@ -41,3 +41,8 @@ pub fn shutdown() -> ! {
     sbi_call(SRST_EXTENSION, SBI_SHUTDOWN, 0, 0, 0);
     panic!("It should shutdown!")
 }
+
+pub fn set_timer(time: usize) {
+    let ret = sbi_call(SBI_SET_TIMER, 0, time, 0, 0);
+    println!("sbi_set_timer: ret = {}", ret);
+}

@@ -2,42 +2,42 @@
 #![no_main]
 #![feature(panic_info_message)]
 #![feature(custom_test_frameworks)]
-#![test_runner(rv6::test_runner)]
+#![test_runner(kernel::test_runner)]
 #![reexport_test_harness_main = "test_main"]
+#![allow(clippy::empty_loop)]
 
 use core::panic::PanicInfo;
-use log::{error, info};
-use rv6::{context, logging};
+use kernel::{logging, trap};
 
 #[no_mangle]
 pub extern "C" fn os_main() -> ! {
     #[cfg(test)]
     test_main();
 
+    trap::init();
     logging::init();
-    context::trap_init();
-    info!("Hello, RV6!");
-    panic!("It should shutdown!")
+    log::info!("Hello, RV6!");
+    loop {}
 }
 
 #[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     if let Some(location) = info.location() {
-        error!(
+        log::error!(
             "Panicked at {}:{} {}",
             location.file(),
             location.line(),
             info.message().unwrap()
         );
     } else {
-        error!("Panicked: {}", info.message().unwrap());
+        log::error!("Panicked: {}", info.message().unwrap());
     }
-    rv6::sbi::shutdown()
+    kernel::sbi::shutdown()
 }
 
 #[cfg(test)]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    rv6::test_panic_handler(info)
+    kernel::test_panic_handler(info)
 }

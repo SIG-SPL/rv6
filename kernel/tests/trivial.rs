@@ -2,7 +2,7 @@
 #![no_std]
 #![no_main]
 #![feature(custom_test_frameworks)]
-#![test_runner(rv6::test_runner)]
+#![test_runner(kernel::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
 use core::panic::PanicInfo;
@@ -15,15 +15,10 @@ pub extern "C" fn os_main() -> ! {
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    rv6::test_panic_handler(info)
+    kernel::test_panic_handler(info)
 }
 
 #[test_case]
 fn trivial_assertion() {
-    assert_eq!(1, 1);
-}
-
-#[test_case]
-fn trivial_assertion_failed() {
-    assert_eq!(1, 2);
+    assert_eq!(1 + 1, 2);
 }

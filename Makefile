@@ -1,7 +1,7 @@
 GDB=riscv64-unknown-elf-gdb
-BIOS=./src/asm/rustsbi-qemu.bin
+BIOS=rustsbi-qemu.bin
 QEMU = qemu-system-riscv64
-DEBUGTARGET=./target/riscv64gc-unknown-none-elf/debug/rv6
+DEBUGTARGET=./target/riscv64gc-unknown-none-elf/debug/kernel
 
 run: 
 	@cargo run --release
@@ -17,7 +17,13 @@ debug:
 		-s -S
 
 test:
-	@cargo test
+	@echo "         _____         _     _  __                    _"
+	@echo "        |_   _|__  ___| |_  | |/ /___ _ __ _ __   ___| |"
+	@echo "          | |/ _ \/ __| __| | ' // _ \ '__| '_ \ / _ \ |"
+	@echo "          | |  __/\__ \ |_  | . \  __/ |  | | | |  __/ |"
+	@echo "          |_|\___||___/\__| |_|\_\___|_|  |_| |_|\___|_|"
+	@echo "        ================================================"
+	@cargo test --package kernel
 
 clean:
 	@cargo clean

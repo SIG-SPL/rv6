@@ -1,6 +1,6 @@
 [build]
 target = "riscv64gc-unknown-none-elf"
-rustflags = ['-Clink-arg=-Tsrc/os.ld']
+rustflags = ['-Clink-arg=-Tkernel/src/os.ld']
 
 [target.riscv64gc-unknown-none-elf]
-runner = "qemu-system-riscv64 -nographic -smp 1 -machine virt -bios ./src/asm/rustsbi-qemu.bin -kernel"
+runner = "qemu-system-riscv64 -nographic -smp 1 -machine virt -bios rustsbi-qemu.bin -kernel"

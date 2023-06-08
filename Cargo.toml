@@ -1,18 +1,19 @@
-[package]
-name = "rv6"
-version = "0.1.0"
-edition = "2021"
+[workspace]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+members = [
+    "kernel",
+    "user"
+]
+resolver = "2"
+
+[workspace.package]
+authors = ["Qi Zhan <qizhan@zju.edu.cn>"]
+repository = "https://github.com/SIG-SPL/rv6"
 
 # the profile used for `cargo build`
 [profile.dev]
-panic = "abort" # disable stack unwinding on panic
+panic = "abort" 
 
 # the profile used for `cargo build --release`
 [profile.release]
-panic = "abort" # disable stack unwinding on panic
-
-[dependencies]
-log = "0.4.18"
-riscv = "0.10.1"
+panic = "abort" 
