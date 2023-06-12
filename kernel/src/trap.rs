@@ -17,7 +17,6 @@ pub fn trap_handler(cx: &mut TrapFrame) -> &mut TrapFrame {
         }
         Trap::Exception(Exception::UserEnvCall) => {
             do_syscall(cx);
-            debug!("ecall from user mode");
         }
         Trap::Exception(Exception::IllegalInstruction) => {
             panic!("IllegalInstruction")

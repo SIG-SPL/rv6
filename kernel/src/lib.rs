@@ -14,16 +14,22 @@ global_asm!(include_str!("asm/swtch.S"));
 mod context;
 #[macro_use]
 pub mod console;
+pub mod allocator;
 mod loader;
 pub mod logging;
 pub mod sbi;
+pub mod sched;
+mod sync;
 mod syscall;
+pub mod task;
 pub mod trap;
 
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate lazy_static;
 
-pub use context::{TrapFrame, Context};
+pub use context::{Context, TrapFrame};
 
 pub trait Testable {
     fn run(&self);
@@ -41,16 +47,6 @@ where
 }
 
 pub fn test_runner(tests: &[&dyn Testable]) {
-    // println!(
-    //     r"
-    //      _____         _     _  __                    _
-    //     |_   _|__  ___| |_  | |/ /___ _ __ _ __   ___| |
-    //       | |/ _ \/ __| __| | ' // _ \ '__| '_ \ / _ \ |
-    //       | |  __/\__ \ |_  | . \  __/ |  | | | |  __/ |
-    //       |_|\___||___/\__| |_|\_\___|_|  |_| |_|\___|_|
-    //     ================================================
-    //     "
-    // );
     println!("Running {} tests", tests.len());
     for test in tests {
         test.run();
