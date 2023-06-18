@@ -2,7 +2,8 @@
 
 members = [
     "kernel",
-    "user"
+    "user",
+    "config",
 ]
 resolver = "2"
 

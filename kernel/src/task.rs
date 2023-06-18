@@ -16,6 +16,15 @@ impl TaskManager {
     }
 }
 
-struct Task {
+#[derive(Default)]
+pub enum TaskState {
+    Running,
+    #[default]
+    Ready,
+    Blocked,
+    Exited,
+}
 
+struct Task {
+    state: TaskState,
 }

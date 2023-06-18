@@ -5,9 +5,7 @@
 use core::arch::asm;
 use core::panic::PanicInfo;
 
-pub const WRITE: usize = 1;
-pub const OPEN: usize = 2;
-pub const EXIT: usize = 93;
+use config::syscall::*;
 
 pub fn syscall(id: usize, arg0: usize, arg1: usize, arg2: usize) -> usize {
     let ret;
@@ -24,11 +22,11 @@ pub fn syscall(id: usize, arg0: usize, arg1: usize, arg2: usize) -> usize {
 }
 
 pub fn write(fd: usize, buffer: &[u8]) -> usize {
-    syscall(WRITE, fd, buffer.as_ptr() as usize, buffer.len())
+    syscall(SYSCALL_WRITE, fd, buffer.as_ptr() as usize, buffer.len())
 }
 
 pub fn exit(code: i32) -> ! {
-    syscall(EXIT, code as usize, 0, 0);
+    syscall(SYSCALL_EXIT, code as usize, 0, 0);
     panic!("unreachable after sys_exit!")
 }
 

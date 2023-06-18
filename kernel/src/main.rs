@@ -5,7 +5,6 @@
 #![test_runner(kernel::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
-use alloc::vec;
 use core::{arch::asm, panic::PanicInfo};
 use kernel::{allocator, logging, trap};
 

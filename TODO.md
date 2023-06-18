@@ -1,4 +1,3 @@
-
 # TODO
 
 - [ ] simple file system
@@ -6,5 +5,3 @@
 - [ ] proper directory structure, i.e. threads, processes, memory, file system, IO, etc.
 - [ ] corresponding tests
 - [ ] a simple shell
-- [ ] system calls
-

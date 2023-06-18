@@ -12,3 +12,4 @@ buddy_system_allocator = "0.9.0"
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
 log = "0.4.18"
 riscv = "0.10.1"
+config = {path = "../config"}

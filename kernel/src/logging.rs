@@ -1,3 +1,5 @@
+//! Logging utilities
+
 use log::{self, Level, LevelFilter, Log, Metadata, Record};
 
 struct Logger;
