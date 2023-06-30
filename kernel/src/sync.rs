@@ -9,15 +9,17 @@ pub const UNLOCKED: bool = false;
 pub struct SpinLock<T> {
     locked: AtomicBool,
     value: UnsafeCell<T>,
+    name: &'static str, // debug purpose
 }
 
 unsafe impl<T> Sync for SpinLock<T> where T: Send {}
 
 impl<T> SpinLock<T> {
-    pub const fn new(data: T) -> Self {
+    pub const fn new(data: T, _name: &'static str) -> Self {
         Self {
             locked: AtomicBool::new(UNLOCKED),
             value: UnsafeCell::new(data),
+            name: _name,
         }
     }
 
@@ -30,6 +32,7 @@ impl<T> SpinLock<T> {
             // spin
             core::hint::spin_loop();
         }
+        // debug!("{} acquired", self.name);
         Guard { lock: self }
     }
 }
@@ -56,6 +59,7 @@ impl<T> DerefMut for Guard<'_, T> {
 
 impl<T> Drop for Guard<'_, T> {
     fn drop(&mut self) {
+        // debug!("{} released", self.lock.name);
         self.lock.locked.store(UNLOCKED, Ordering::Release);
     }
 }

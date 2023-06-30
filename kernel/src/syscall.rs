@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use crate::TrapFrame;
 
+use crate::sched::schedule;
 use config::std_io::*;
 use config::syscall::*;
 
@@ -8,7 +9,11 @@ pub fn do_syscall(context: &mut TrapFrame) {
     match context.regs[SYSCALL_REG_NUM] {
         SYSCALL_EXIT => {
             println!("exit code: {}", context.regs[SYSCALL_REG_RET]);
-            // schedule();
+            schedule();
+        }
+        SYSCALL_GETPID => {
+            let tm = crate::task::TASK_MANAGER.lock();
+            context.regs[SYSCALL_REG_RET] = tm.current_pid;
         }
         SYSCALL_WRITE => {
             let fd = context.regs[SYSCALL_REG_ARG0];
@@ -47,7 +52,7 @@ pub fn do_syscall(context: &mut TrapFrame) {
             context.regs[SYSCALL_REG_RET] = crate::sbi::get_timer();
         }
         _ => {
-            println!("unknown syscall");
+            panic!("unknown syscall number {}", context.regs[SYSCALL_REG_NUM]);
         }
     }
 }
