@@ -12,6 +12,7 @@ After installing rust, you need to switch to nightly and install the `riscv64gc-
 ```bash
 rustup override set nightly # switch to nightly in this directory
 rustup target add riscv64gc-unknown-none-elf
+cargo install cargo-binutils
 ```
 
 For MacOS users, you can install qemu and riscv-gnu-toolchain with homebrew.

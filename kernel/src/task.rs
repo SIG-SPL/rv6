@@ -144,8 +144,8 @@ impl Task {
             pid,
             state: TaskState::Ready,
             kstack: kstack(pid),
-            context: Context::new(),
-            trapframe: TrapFrame::new(),
+            context: Context::default(),
+            trapframe: TrapFrame::default(),
         };
         task.context.sp = task.kstack;
         task.context.ra = forkret as usize;

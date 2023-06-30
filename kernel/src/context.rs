@@ -21,6 +21,12 @@ impl TrapFrame {
     }
 }
 
+impl Default for TrapFrame {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 /// Context for task switching
@@ -61,5 +67,11 @@ impl Context {
             s10: 0,
             s11: 0,
         }
+    }
+}
+
+impl Default for Context {
+    fn default() -> Self {
+        Self::new()
     }
 }

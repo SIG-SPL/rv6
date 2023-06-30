@@ -8,8 +8,10 @@ symbol:
 	@cargo nm --bin kernel --quiet > System.map 2>/dev/null
 
 run: symbol
-#   @cargo run --release --bin kernel
 	@cargo run --bin kernel
+
+release: symbol
+	@cargo run --release --bin kernel
 
 debug: 
 	@cargo build
