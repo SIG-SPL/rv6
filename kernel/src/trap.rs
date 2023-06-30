@@ -9,10 +9,13 @@ global_asm!(include_str!("asm/trap.S"));
 #[no_mangle]
 pub fn trap_handler(cx: &mut TrapFrame) -> &mut TrapFrame {
     let scause = scause::read();
-    assert_eq!(scause.bits(), cx.scause, "scause not equal before and after interrupt");
+    assert_eq!(
+        scause.bits(),
+        cx.scause,
+        "scause not equal before and after interrupt"
+    );
     match scause.cause() {
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
-            debug!("catch timer interrupt current time: {}", timer::get_time_ms());
             timer::set_next_trigger();
         }
         Trap::Exception(Exception::UserEnvCall) => {
@@ -27,6 +30,18 @@ pub fn trap_handler(cx: &mut TrapFrame) -> &mut TrapFrame {
         cx.sepc += 4;
     }
     cx
+}
+
+pub fn intr_off() {
+    unsafe {
+        riscv::register::sstatus::clear_sie();
+    }
+}
+
+pub fn intr_on() {
+    unsafe {
+        riscv::register::sstatus::set_sie();
+    }
 }
 
 pub fn init() {

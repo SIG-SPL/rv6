@@ -3,8 +3,13 @@ BIOS=rustsbi-qemu.bin
 QEMU=qemu-system-riscv64
 DEBUGTARGET=./target/riscv64gc-unknown-none-elf/debug/kernel
 
-run: 
-	@cargo run --release --bin kernel
+symbol:
+	@cargo objdump --bin kernel --quiet -- -d > kernel.asm 2>/dev/null
+	@cargo nm --bin kernel --quiet > System.map 2>/dev/null
+
+run: symbol
+#   @cargo run --release --bin kernel
+	@cargo run --bin kernel
 
 debug: 
 	@cargo build
@@ -27,3 +32,4 @@ test:
 
 clean:
 	@cargo clean
+	@rm -f kernel.asm System.map
