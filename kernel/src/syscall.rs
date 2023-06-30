@@ -11,6 +11,10 @@ pub fn do_syscall(context: &mut TrapFrame) {
             println!("exit code: {}", context.regs[SYSCALL_REG_RET]);
             schedule();
         }
+        SYSCALL_GETPID => {
+            let tm = crate::task::TASK_MANAGER.lock();
+            context.regs[SYSCALL_REG_RET] = tm.current_pid;
+        }
         SYSCALL_WRITE => {
             let fd = context.regs[SYSCALL_REG_ARG0];
             let buf = context.regs[SYSCALL_REG_ARG1] as *const u8;

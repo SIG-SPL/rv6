@@ -14,38 +14,44 @@ lazy_static! {
 }
 
 pub struct TaskManager {
-    tasks: Vec<Task>,
-    current_pid: usize,
+    pub tasks: Vec<Task>,
+    pub current_pid: usize,
 }
 
 #[no_mangle]
 pub fn loop_print() -> ! {
-    let string = alloc::format!("Hello from task {}\n", 0);
-    loop {
+    let pid: usize;
+    unsafe {
+        asm!(
+            "ecall",
+            out("a0") pid,
+            in("a7") SYSCALL_GETPID,
+        );
+    }
+    let string = alloc::format!("Hello from task {}\n", pid);
+    unsafe {
+        asm!(
+            "ecall",
+            inlateout("a0") 1 => _,
+            in("a1") string.as_ptr(),
+            in("a2") string.len(),
+            in("a7") SYSCALL_WRITE,
+        );
+    }
+    for _ in 0..10000000 {
         unsafe {
-            asm!(
-                "ecall",
-                inlateout("a0") 1 => _,
-                in("a1") string.as_ptr(),
-                in("a2") string.len(),
-                in("a7") SYSCALL_WRITE,
-            );
-        }
-        for _ in 0..10000000 {
-            unsafe {
-                asm!("nop");
-            }
+            asm!("nop");
         }
     }
     // exit
-    // unsafe {
-    //     asm!(
-    //         "ecall",
-    //         inlateout("a0") 0 => _,
-    //         in("a7") SYSCALL_EXIT,
-    //     );
-    // }
-    // unreachable!()
+    unsafe {
+        asm!(
+            "ecall",
+            inlateout("a0") 0 => _,
+            in("a7") SYSCALL_EXIT,
+        );
+    }
+    unreachable!()
 }
 
 #[no_mangle]

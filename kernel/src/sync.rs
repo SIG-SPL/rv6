@@ -32,7 +32,7 @@ impl<T> SpinLock<T> {
             // spin
             core::hint::spin_loop();
         }
-        debug!("{} acquired", self.name);
+        // debug!("{} acquired", self.name);
         Guard { lock: self }
     }
 }
@@ -59,7 +59,7 @@ impl<T> DerefMut for Guard<'_, T> {
 
 impl<T> Drop for Guard<'_, T> {
     fn drop(&mut self) {
-        debug!("{} released", self.lock.name);
+        // debug!("{} released", self.lock.name);
         self.lock.locked.store(UNLOCKED, Ordering::Release);
     }
 }
