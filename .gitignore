@@ -1,5 +1,4 @@
 /target
-.vscode
 **/.DS_Store
 kernel.asm
 System.map
