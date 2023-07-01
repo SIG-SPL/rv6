@@ -1,3 +1,5 @@
+#![allow(clippy::result_unit_err)]
+
 use core::{
     ptr::NonNull,
     sync::atomic::{AtomicUsize, Ordering},
@@ -196,15 +198,14 @@ pub mod gpu {
         unsafe {
             if let Some(ref mut fb) = FRAMEBUFFER {
                 let idx = ((py * get_width() + px) * 4) as usize;
-                (*fb)[idx] = r as u8;
-                (*fb)[idx + 1] = g as u8;
-                (*fb)[idx + 2] = b as u8;
-                (*fb)[idx + 3] = alpha as u8;
+                (*fb)[idx] = r;
+                (*fb)[idx + 1] = g;
+                (*fb)[idx + 2] = b;
+                (*fb)[idx + 3] = alpha;
             }
             Ok(())
         }
     }
-    
 }
 struct HalImpl;
 
@@ -241,7 +242,5 @@ unsafe impl Hal for HalImpl {
         virt_to_phys(va)
     }
 
-    unsafe fn unshare(paddr: PhysAddr, buffer: NonNull<[u8]>, direction: BufferDirection) {
-        ()
-    }
+    unsafe fn unshare(paddr: PhysAddr, buffer: NonNull<[u8]>, direction: BufferDirection) {}
 }
