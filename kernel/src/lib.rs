@@ -23,6 +23,7 @@ mod sync;
 mod syscall;
 pub mod task;
 pub mod trap;
+pub mod virtio;
 
 #[macro_use]
 extern crate log;

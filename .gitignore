@@ -3,3 +3,5 @@
 **/.DS_Store
 kernel.asm
 System.map
+fs.img
+Cargo.lock
