@@ -1,9 +1,9 @@
 extern crate alloc;
 
 use crate::context::{Context, TrapFrame};
+use crate::sched::schedule;
 use crate::sync::SpinLock;
 use alloc::vec::Vec;
-use config::layout::{kstack, STACKSIZE};
 use core::arch::asm;
 
 lazy_static! {
@@ -66,11 +66,7 @@ pub fn init() -> ! {
     let mut tm = TASK_MANAGER.lock();
     tm.init();
     drop(tm);
-    unsafe {
-        asm!("mv {}, sp", in(reg) kstack(0) + STACKSIZE);
-        riscv::register::sepc::write(loop_print as usize);
-        asm!("sret")
-    }
+    schedule();
     unreachable!()
 }
 
@@ -129,6 +125,7 @@ pub enum TaskState {
 /// Tasks run in user mode, but use kernel memory for now 
 /// because we don't have virtual memory yet.
 #[rustfmt::skip]
+#[repr(align(4096))]
 pub struct Task {
     /// process id
     pub pid:            usize,
@@ -145,10 +142,11 @@ impl Task {
         let mut task = Self {
             pid,
             state: TaskState::default(),
-            kstack: kstack(pid),
+            kstack: 0,
             context: Context::default(),
             trapframe: TrapFrame::default(),
         };
+        task.kstack = &task as *const Task as usize + 4096;
         task.context.sp = task.kstack;
         task.context.ra = forkret as usize;
         task

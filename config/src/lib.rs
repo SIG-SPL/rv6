@@ -70,17 +70,12 @@ pub mod layout {
     pub const KERNEL_BASE: usize = 0x80200000;
     pub const PHY_SIZE: usize = 128 * 1024 * 1024;
     pub const PHY_STOP: usize = KERNEL_BASE + PHY_SIZE;
-    
+
     pub const KSTACKTOP: usize = PHY_STOP;
     /// Page size 4KB
     pub const PGSIZE: usize = 4 * 1024;
     /// Kernel stack size 4KB
     pub const STACKSIZE: usize = PGSIZE;
-    /// Kernel stack pointer
-    pub fn kstack(pid: usize) -> usize {
-        KSTACKTOP - pid * STACKSIZE
-    }
-    
 }
 
 /* Standard input/output/error settings */
