@@ -3,8 +3,8 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 use crate::context::{Context, TrapFrame};
-use crate::memlayout::{kstack, STACKSIZE};
 use crate::sync::SpinLock;
+use config::layout::{kstack, STACKSIZE};
 use config::syscall::*;
 use core::arch::asm;
 
@@ -131,8 +131,11 @@ pub enum TaskState {
 /// because we don't have virtual memory yet.
 #[rustfmt::skip]
 pub struct Task {
+    /// process id
     pub pid:            usize,
+    /// task state
     pub state:          TaskState,
+    /// kernel stack
     pub kstack:         usize,
     pub context:        Context,
     pub trapframe:      TrapFrame,
@@ -142,7 +145,7 @@ impl Task {
     pub fn new(pid: usize) -> Self {
         let mut task = Self {
             pid,
-            state: TaskState::Ready,
+            state: TaskState::default(),
             kstack: kstack(pid),
             context: Context::default(),
             trapframe: TrapFrame::default(),

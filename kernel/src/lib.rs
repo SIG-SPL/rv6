@@ -17,7 +17,6 @@ pub mod console;
 pub mod allocator;
 mod loader;
 pub mod logging;
-pub mod memlayout;
 pub mod sbi;
 pub mod sched;
 mod sync;

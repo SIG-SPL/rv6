@@ -1,4 +1,4 @@
-//! rconfig show the all SETTING that all project used, it includes:
+//! config show the all SETTING that all project used, it includes:
 //! * Interface of CPU and OS, i.e. SBI
 //! * Interface of ROS and RAPPS, such as system call number
 //! * Layout of OS kernel, such as heap, start address of kernel
@@ -53,7 +53,6 @@ pub mod syscall {
 }
 /* Layout of OS kernel */
 pub mod layout {
-    //  draw a picture to show the layout of kernel memory space
     /*
      * 0xffffffff +------------------+ <- 0xffffffff (4GB)
      * 0xa0000000 |     mmio         | <- DEVICE_BASE
@@ -68,8 +67,20 @@ pub mod layout {
      * 0x00000000 +------------------+ <- 0x00000000
      */
 
-    pub const KERNEL_START: usize = 0x80000000;
-
+    pub const KERNEL_BASE: usize = 0x80200000;
+    pub const PHY_SIZE: usize = 128 * 1024 * 1024;
+    pub const PHY_STOP: usize = KERNEL_BASE + PHY_SIZE;
+    
+    pub const KSTACKTOP: usize = PHY_STOP;
+    /// Page size 4KB
+    pub const PGSIZE: usize = 4 * 1024;
+    /// Kernel stack size 4KB
+    pub const STACKSIZE: usize = PGSIZE;
+    /// Kernel stack pointer
+    pub fn kstack(pid: usize) -> usize {
+        KSTACKTOP - pid * STACKSIZE
+    }
+    
 }
 
 /* Standard input/output/error settings */
