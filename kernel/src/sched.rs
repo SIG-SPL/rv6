@@ -1,16 +1,15 @@
-use crate::task::{TASK_MANAGER, forkret};
+use crate::task::TASK_MANAGER;
 
 pub fn schedule() {
     extern "C" {
-        fn swtch(_old: usize, _new: usize);
+        fn swtch(old: usize, new: usize);
     }
 
     println!("Scheduling");
     let mut tm = TASK_MANAGER.lock();
-    let (old, new): (usize, usize) = tm.switch_task();
+    let (old, new) = tm.switch_task();
     drop(tm);
-    forkret();
-    // unsafe {
-    //     swtch(old, new);
-    // }
+    unsafe {
+        swtch(old, new);
+    }
 }

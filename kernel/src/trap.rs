@@ -1,5 +1,4 @@
 use crate::context::TrapFrame;
-use crate::syscall::do_syscall;
 use core::arch::global_asm;
 use riscv::register::scause::{self, Exception, Interrupt, Trap};
 use riscv::register::{sie, stvec};
@@ -7,37 +6,40 @@ use riscv::register::{sie, stvec};
 global_asm!(include_str!("asm/trap.S"));
 
 #[no_mangle]
-pub fn trap_handler(cx: &mut TrapFrame) -> &mut TrapFrame {
+pub fn trap_handler(ctx: &mut TrapFrame) -> &mut TrapFrame {
     let scause = scause::read();
     assert_eq!(
         scause.bits(),
-        cx.scause,
+        ctx.scause,
         "scause not equal before and after interrupt"
     );
     match scause.cause() {
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
             timer::set_next_trigger();
+            // crate::sched::schedule();
         }
         Trap::Exception(Exception::UserEnvCall) => {
-            do_syscall(cx);
+            crate::syscall::do_syscall(ctx);
         }
         Trap::Exception(Exception::IllegalInstruction) => {
             panic!("IllegalInstruction")
         }
-        _ => panic!("unhandled trap {:?}\n{:#x?}", scause.cause(), cx),
+        _ => panic!("unhandled trap {:?}\n{:#x?}", scause.cause(), ctx),
     }
     if scause.is_exception() {
-        cx.sepc += 4;
+        ctx.sepc += 4;
     }
-    cx
+    ctx
 }
 
+/// turn off interrupt
 pub fn intr_off() {
     unsafe {
         riscv::register::sstatus::clear_sie();
     }
 }
 
+/// turn on interrupt
 pub fn intr_on() {
     unsafe {
         riscv::register::sstatus::set_sie();

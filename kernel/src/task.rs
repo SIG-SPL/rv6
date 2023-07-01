@@ -1,11 +1,9 @@
 extern crate alloc;
 
-use alloc::vec::Vec;
-
 use crate::context::{Context, TrapFrame};
 use crate::sync::SpinLock;
+use alloc::vec::Vec;
 use config::layout::{kstack, STACKSIZE};
-use config::syscall::*;
 use core::arch::asm;
 
 lazy_static! {
@@ -20,6 +18,7 @@ pub struct TaskManager {
 
 #[no_mangle]
 pub fn loop_print() -> ! {
+    use config::syscall::*;
     let pid: usize;
     unsafe {
         asm!(
@@ -100,20 +99,20 @@ impl TaskManager {
     pub fn switch_task(&mut self) -> (usize, usize) {
         let current_pid = self.current_pid;
         let next_pid = (current_pid + 1) % self.tasks.len();
-        let ctx1: usize;
-        let ctx2: usize;
+        let ctx_new: usize;
+        let ctx_old: usize;
         {
             let next_task = &mut self.tasks[next_pid];
             next_task.set_state(TaskState::Running);
-            ctx1 = &next_task.context as *const Context as usize;
+            ctx_new = &next_task.context as *const Context as usize;
         }
         {
             let current_task = &mut self.tasks[current_pid];
             current_task.set_state(TaskState::Ready);
-            ctx2 = &current_task.context as *const Context as usize;
+            ctx_old = &current_task.context as *const Context as usize;
         }
         self.current_pid = next_pid;
-        (ctx2, ctx1)
+        (ctx_old, ctx_new)
     }
 }
 

@@ -27,9 +27,9 @@ impl Default for TrapFrame {
     }
 }
 
+/// Context for task switching
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
-/// Context for task switching
 pub struct Context {
     pub ra: Reg,
     pub sp: Reg,

@@ -18,7 +18,6 @@ pub extern "C" fn os_main() -> ! {
     trap::init();
     logging::init();
     allocator::init();
-
     task::init();
 }
 
@@ -35,7 +34,8 @@ fn panic(info: &PanicInfo) -> ! {
     } else {
         log::error!("Panicked: {}", info.message().unwrap());
     }
-    kernel::sbi::shutdown()
+    loop {}
+    // kernel::sbi::shutdown()
 }
 
 #[cfg(test)]
