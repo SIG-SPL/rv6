@@ -6,18 +6,20 @@
 #![reexport_test_harness_main = "test_main"]
 
 use core::panic::PanicInfo;
-use kernel::{allocator, logging, task, trap};
+use kernel::{allocator, logging, task, trap, virtio};
 
 extern crate alloc;
 
 #[no_mangle]
-pub extern "C" fn os_main() -> ! {
+pub extern "C" fn os_main(hartid: usize, dtb_pa: usize) -> ! {
     #[cfg(test)]
     test_main();
 
     trap::init();
     logging::init();
     allocator::init();
+    virtio::init(dtb_pa);
+    log::info!("Initialized hart {}", hartid);
     task::init();
 }
 

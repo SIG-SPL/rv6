@@ -3,4 +3,12 @@ target = "riscv64gc-unknown-none-elf"
 rustflags = ['-Clink-arg=-Tkernel/src/os.ld']
 
 [target.riscv64gc-unknown-none-elf]
-runner = "qemu-system-riscv64 -nographic -smp 1 -machine virt -bios rustsbi-qemu.bin -kernel"
+runner = """
+    qemu-system-riscv64 
+        -serial mon:stdio
+        -machine virt
+        -drive file=fs.img,format=raw,id=hd0
+        -device virtio-blk-device,drive=hd0
+        -device virtio-gpu-device
+        -kernel
+    """
