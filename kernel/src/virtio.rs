@@ -49,6 +49,7 @@ fn virtio_mmio_init(node: FdtNode) {
                 );
                 match transport.device_type() {
                     DeviceType::Block => block::init(transport),
+                    DeviceType::GPU => gpu::init(transport),
                     _ => warn!("Device type {:?} not supported", transport.device_type()),
                 }
             }
@@ -65,7 +66,7 @@ pub mod block {
     /// The global block device. We support only one block device for now.
     static mut DEVICE: Option<VirtIOBlk<HalImpl, MmioTransport>> = None;
 
-    pub fn init(transport: MmioTransport) {
+    pub(super) fn init(transport: MmioTransport) {
         if unsafe { DEVICE.is_some() } {
             warn!("Only one block device is supported");
             return;
@@ -100,8 +101,111 @@ pub mod block {
         }
         Ok(())
     }
+
+    /// Capacity of the block device in sectors (512 bytes per sector)
+    pub fn capacity() -> u64 {
+        unsafe {
+            if let Some(ref mut blk) = DEVICE {
+                blk.capacity()
+            } else {
+                0
+            }
+        }
+    }
 }
 
+pub mod gpu {
+
+    use virtio_drivers::{device::gpu::VirtIOGpu, transport::mmio::MmioTransport};
+
+    type Result<T = ()> = core::result::Result<T, ()>;
+
+    use super::HalImpl;
+
+    static mut DEVICE: Option<VirtIOGpu<HalImpl, MmioTransport>> = None;
+    static mut FRAMEBUFFER: Option<&mut [u8]> = None;
+
+    static mut WIDTH: u32 = 0;
+    static mut HEIGHT: u32 = 0;
+
+    pub(super) fn init(transport: MmioTransport) {
+        match VirtIOGpu::<HalImpl, MmioTransport>::new(transport) {
+            Err(e) => error!("Failed to initialize virtio gpu device: {:?}", e),
+            Ok(mut gpu) => {
+                match gpu.resolution() {
+                    Ok((w, h)) => {
+                        info!("Initialized virtio gpu device with resolution {}x{}", w, h);
+                        unsafe {
+                            WIDTH = w;
+                            HEIGHT = h;
+                        }
+                    }
+                    Err(e) => error!("Failed to get resolution of virtio gpu device: {:?}", e),
+                }
+                unsafe {
+                    DEVICE = Some(gpu);
+                    if let Some(ref mut gpu) = DEVICE {
+                        match gpu.setup_framebuffer() {
+                            Ok(fb) => {
+                                info!("Initialized virtio gpu framebuffer");
+                                FRAMEBUFFER = Some(fb);
+                            }
+                            Err(e) => error!("Failed to setup virtio gpu framebuffer: {:?}", e),
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn flush() -> Result {
+        unsafe {
+            if let Some(ref mut gpu) = DEVICE {
+                return match gpu.flush() {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(()),
+                };
+            }
+        }
+        Ok(())
+    }
+
+    pub fn get_framebuffer() -> Result<&'static &'static mut [u8]> {
+        unsafe {
+            if let Some(ref fb) = FRAMEBUFFER {
+                Ok(fb)
+            } else {
+                Err(())
+            }
+        }
+    }
+
+    pub fn get_resolution() -> (u32, u32) {
+        (unsafe { WIDTH }, unsafe { HEIGHT })
+    }
+
+    pub fn get_width() -> u32 {
+        unsafe { WIDTH }
+    }
+
+    pub fn get_height() -> u32 {
+        unsafe { HEIGHT }
+    }
+
+    pub fn set_pixel(px: u32, py: u32, r: u8, g: u8, b: u8, alpha: u8) -> Result {
+        unsafe {
+            if let Some(ref mut fb) = FRAMEBUFFER {
+                let idx = ((py * get_width() + px) * 4) as usize;
+                (*fb)[idx] = r as u8;
+                (*fb)[idx + 1] = g as u8;
+                (*fb)[idx + 2] = b as u8;
+                (*fb)[idx + 3] = alpha as u8;
+            }
+            Ok(())
+        }
+    }
+    
+}
 struct HalImpl;
 
 extern "C" {
