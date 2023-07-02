@@ -76,6 +76,8 @@ pub mod layout {
     pub const PGSIZE: usize = 4 * 1024;
     /// Kernel stack size 4KB
     pub const STACKSIZE: usize = PGSIZE;
+    /// Kernel Heap size 3MB
+    pub const KERNEL_HEAP_SIZE: usize = 0x30_0000;
 }
 
 /* Standard input/output/error settings */

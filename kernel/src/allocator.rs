@@ -1,9 +1,7 @@
 //! TODO: use our own allocator and make a benchmark
 
 use buddy_system_allocator::LockedHeap;
-// use crate::config::KERNEL_HEAP_SIZE;
-
-const KERNEL_HEAP_SIZE: usize = 0x80_0000;
+use config::layout::KERNEL_HEAP_SIZE;
 
 #[global_allocator]
 static HEAP_ALLOCATOR: LockedHeap<32> = LockedHeap::empty();
