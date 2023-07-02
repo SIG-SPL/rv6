@@ -1,5 +1,4 @@
 GDB=riscv64-unknown-elf-gdb
-BIOS=rustsbi-qemu.bin
 QEMU=qemu-system-riscv64
 DEBUGTARGET=./target/riscv64gc-unknown-none-elf/debug/kernel
 
@@ -13,13 +12,36 @@ run: symbol
 release: symbol
 	@cargo run --release --bin kernel
 
+nographic: symbol
+	@$(QEMU) \
+		-serial mon:stdio \
+		-nographic \
+		-machine virt \
+		-drive file=fs.img,format=raw,id=hd0 \
+        -device virtio-blk-device,drive=hd0 \
+		-kernel $(DEBUGTARGET)
+
 debug: 
 	@cargo build
 	@echo "*** Now run '$(GDB)' in another window." 1>&2
 	$(QEMU) \
-		-machine virt \
+		-serial mon:stdio \
 		-nographic \
-		-bios $(BIOS) \
+		-machine virt \
+		-drive file=fs.img,format=raw,id=hd0 \
+        -device virtio-blk-device,drive=hd0 \
+		-kernel $(DEBUGTARGET) \
+		-s -S
+
+debug-graphic: 
+	@cargo build
+	@echo "*** Now run '$(GDB)' in another window." 1>&2
+	$(QEMU) \
+		-serial mon:stdio \
+		-machine virt \
+		-drive file=fs.img,format=raw,id=hd0 \
+		-device virtio-blk-device,drive=hd0 \
+		-device virtio-gpu-device \
 		-kernel $(DEBUGTARGET) \
 		-s -S
 
