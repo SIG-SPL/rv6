@@ -88,7 +88,6 @@ impl TaskManager {
         let pid = self.tasks.len();
         let task = Task::new(pid);
         self.tasks.push(task);
-        // info!("Task {} created", pid);
         &mut self.tasks[pid]
     }
 

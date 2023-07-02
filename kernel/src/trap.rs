@@ -1,7 +1,8 @@
 use crate::context::TrapFrame;
 use core::arch::global_asm;
+use config::layout::{plic_spri, plic_sen, UART0, VIRTIO0, plic_pri};
 use riscv::register::scause::{self, Exception, Interrupt, Trap};
-use riscv::register::{sie, stvec};
+use riscv::register::{sie, stvec, sstatus};
 
 global_asm!(include_str!("asm/trap.S"));
 
@@ -17,6 +18,10 @@ pub fn trap_handler(ctx: &mut TrapFrame) -> &mut TrapFrame {
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
             timer::set_next_trigger();
             // crate::sched::schedule();
+        }
+        Trap::Interrupt(Interrupt::SupervisorExternal) => {
+            let ch = crate::sbi::console_getchar();
+            println!("get char: {}", ch as u8 as char);
         }
         Trap::Exception(Exception::UserEnvCall) => {
             crate::syscall::do_syscall(ctx);
@@ -46,14 +51,25 @@ pub fn intr_on() {
     }
 }
 
-pub fn init() {
+pub fn init(hartid: usize) {
     extern "C" {
         fn __trap();
     }
 
     unsafe {
         stvec::write(__trap as usize, stvec::TrapMode::Direct);
+        sie::set_sext();
         sie::set_stimer();
+        // enable PLIC by setting desired IRQ priorities nonzero
+        (plic_pri(UART0) as *mut u32).write_volatile(1);
+        (plic_pri(VIRTIO0) as *mut u32).write_volatile(1);
+        // set enable bits
+        (plic_sen(hartid) as *mut u32).write_volatile((1 << UART0) | (1 << VIRTIO0));
+        // set this hart's S-mode priority threshold to 0
+        (plic_spri(hartid) as *mut u32).write_volatile(0);
+        // enable uart serial
+        (0x10000001 as *mut u8).write_volatile(1);
+        sstatus::set_sie();
         timer::set_next_trigger();
     }
 }
