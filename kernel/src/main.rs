@@ -15,7 +15,7 @@ pub extern "C" fn os_main(hartid: usize, dtb_pa: usize) -> ! {
     #[cfg(test)]
     test_main();
 
-    trap::init();
+    trap::init(hartid);
     logging::init();
     allocator::init();
     virtio::init(dtb_pa);
