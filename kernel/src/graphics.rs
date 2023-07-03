@@ -259,16 +259,17 @@ fn get_font_bitmap(font: Font) -> &'static [u8; BITMAP_SIZE] {
 fn draw_ascii(px: u32, py: u32, c: char, font: Font) {
     let index = ascii_to_index(c);
     let bitmap = get_font_bitmap(font);
-    let mut i = 0;
-    for byte in bitmap[index * CHAR_HEIGHT..(index + 1) * CHAR_HEIGHT].iter() {
+    for (i, byte) in bitmap[index * CHAR_HEIGHT..(index + 1) * CHAR_HEIGHT]
+        .iter()
+        .enumerate()
+    {
         for bit in 0..8 {
             if byte & (1 << bit) != 0 {
                 let x = px + bit;
-                let y = py + i;
+                let y = py + i as u32;
                 gpu::set_pixel(x, y, 0xff, 0xff, 0xff, 0).unwrap();
             }
         }
-        i += 1;
     }
 }
 
@@ -283,7 +284,6 @@ fn clear_ascii(px: u32, py: u32) {
 pub fn putc(ch: char) {
     let mut tb = TEXT_BUFFER.lock();
     tb.putc(ch);
-    drop(tb);
 }
 
 impl TextBuffer {
@@ -334,15 +334,13 @@ impl TextBuffer {
 
     /// TODO: Only flush the updated chars
     pub fn flush(&self) {
-        let mut i = 0;
-        for c in self.chars.iter() {
-            let x = (i % self.line_nchars) * CHAR_WIDTH as u32;
-            let y = (i / self.line_nchars) * CHAR_HEIGHT as u32;
+        for (i, c) in self.chars.iter().enumerate() {
+            let x = (i as u32 % self.line_nchars) * CHAR_WIDTH as u32;
+            let y = (i as u32 / self.line_nchars) * CHAR_HEIGHT as u32;
             match c {
                 ' ' => clear_ascii(x, y),
                 _ => draw_ascii(x, y, *c, self.font),
             }
-            i += 1;
         }
     }
 }

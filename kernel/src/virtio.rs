@@ -96,7 +96,6 @@ pub mod block {
             if let Some(ref mut blk) = DEVICE {
                 blk.write_block(block_id, buf)?;
             }
-            drop(_lock);
         }
         Ok(())
     }
@@ -110,7 +109,6 @@ pub mod block {
             if let Some(ref mut blk) = DEVICE {
                 blk.read_block(block_id, buf)?;
             }
-            drop(_lock);
         }
         Ok(())
     }
@@ -120,11 +118,8 @@ pub mod block {
         unsafe {
             let _lock = SPINLOCK.lock();
             if let Some(ref mut blk) = DEVICE {
-                let cap = blk.capacity();
-                drop(_lock);
-                cap
+                blk.capacity()
             } else {
-                drop(_lock);
                 0
             }
         }
@@ -190,7 +185,6 @@ pub mod gpu {
                     Err(_) => Err(()),
                 };
             }
-            drop(_lock);
         }
         Ok(())
     }
@@ -217,7 +211,6 @@ pub mod gpu {
                 (*fb)[idx + 2] = b;
                 (*fb)[idx + 3] = alpha;
             }
-            drop(_lock);
         }
         Ok(())
     }
