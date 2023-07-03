@@ -1,6 +1,7 @@
 [build]
 target = "riscv64gc-unknown-none-elf"
-rustflags = ['-Clink-arg=-Tkernel/src/os.ld']
+rustflags = ['-Clink-arg=-Tsrc/os.ld']
+target-dir = "../target"
 
 [target.riscv64gc-unknown-none-elf]
 runner = """

@@ -1,7 +1,7 @@
 //! config show the all SETTING that all project used, it includes:
 //! * Interface of CPU and OS, i.e. SBI
-//! * Interface of ROS and RAPPS, such as system call number
-//! * Layout of OS kernel, such as heap, start address of kernel
+//! * Interface of OS and user applications, such as system call number
+//! * Layout of OS kernel
 //! * Standard input/output/error settings, such as stdin, stdout, stderr
 
 #![no_std]

@@ -1,4 +1,9 @@
 {
     "rust-analyzer.cargo.target": "riscv64gc-unknown-none-elf",
-    "rust-analyzer.checkOnSave.allTargets": false,
+    "rust-analyzer.check.allTargets": false,
+    "rust-analyzer.linkedProjects": [
+        "./kernel/Cargo.toml",
+        "./config/Cargo.toml",
+        "./user/Cargo.toml"
+    ]
 }

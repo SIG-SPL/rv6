@@ -1,49 +1,36 @@
-GDB=riscv64-unknown-elf-gdb
-QEMU=qemu-system-riscv64
-DEBUGTARGET=./target/riscv64gc-unknown-none-elf/debug/kernel
+DEBUGTARGET   = ./target/riscv64gc-unknown-none-elf/debug/kernel
+RElEASETARGET = ./target/riscv64gc-unknown-none-elf/release/kernel
 
-symbol:
-	@cargo objdump --bin kernel --quiet -- -d > kernel.asm 2>/dev/null
-	@cargo nm --bin kernel --quiet > System.map 2>/dev/null
+GDB = riscv64-unknown-elf-gdb
 
-run: symbol
-	@cargo run --bin kernel
+QEMU = qemu-system-riscv64
+QEMUOPTS =  -serial mon:stdio -machine virt 
+QEMUOPTS += -drive file=fs.img,format=raw,id=hd0 
+QEMUOPTS += -device virtio-blk-device,drive=hd0
+GPUOPTS  =  -device virtio-gpu-device
 
-release: symbol
-	@cargo run --release --bin kernel
+build:
+	@cd kernel && cargo build
+	@cd kernel && cargo objdump --quiet -- -d > ../kernel.asm 2>/dev/null
+	@cd kernel && cargo nm --quiet > ../System.map 2>/dev/null
 
-nographic: symbol
-	@$(QEMU) \
-		-serial mon:stdio \
-		-nographic \
-		-machine virt \
-		-drive file=fs.img,format=raw,id=hd0 \
-        -device virtio-blk-device,drive=hd0 \
-		-kernel $(DEBUGTARGET)
+run: build 
+	@$(QEMU) $(QEMUOPTS) $(GPUOPTS) -kernel $(DEBUGTARGET)
 
-debug: 
-	@cargo build
+release:
+	@cd kernel && cargo build --release
+	@$(QEMU) $(QEMUOPTS) $(GPUOPTS) -kernel $(RElEASETARGET)
+
+nographic: build
+	@$(QEMU) $(QEMUOPTS) -nographic -kernel $(DEBUGTARGET)
+
+debug: build
 	@echo "*** Now run '$(GDB)' in another window." 1>&2
-	$(QEMU) \
-		-serial mon:stdio \
-		-nographic \
-		-machine virt \
-		-drive file=fs.img,format=raw,id=hd0 \
-        -device virtio-blk-device,drive=hd0 \
-		-kernel $(DEBUGTARGET) \
-		-s -S
+	$(QEMU) $(QEMUOPTS) -nographic -kernel $(DEBUGTARGET) -s -S
 
-debug-graphic: 
-	@cargo build
+debug-graphic: build
 	@echo "*** Now run '$(GDB)' in another window." 1>&2
-	$(QEMU) \
-		-serial mon:stdio \
-		-machine virt \
-		-drive file=fs.img,format=raw,id=hd0 \
-		-device virtio-blk-device,drive=hd0 \
-		-device virtio-gpu-device \
-		-kernel $(DEBUGTARGET) \
-		-s -S
+	$(QEMU) $(QEMUOPTS) $(GPUOPTS) -kernel $(DEBUGTARGET) -s -S
 
 test:
 	@echo "         _____         _     _  __                    _"
@@ -52,8 +39,8 @@ test:
 	@echo "          | |  __/\__ \ |_  | . \  __/ |  | | | |  __/ |"
 	@echo "          |_|\___||___/\__| |_|\_\___|_|  |_| |_|\___|_|"
 	@echo "        ================================================"
-	@cargo test --package kernel
+	@cd kernel && cargo test
 
 clean:
-	@cargo clean
+	@rm -f target
 	@rm -f kernel.asm System.map
