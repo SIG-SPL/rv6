@@ -1,8 +1,10 @@
 use crate::context::TrapFrame;
+use crate::graphics;
+use crate::virtio::gpu;
+use config::layout::{plic_pri, plic_sen, plic_spri, UART0, VIRTIO0};
 use core::arch::global_asm;
-use config::layout::{plic_spri, plic_sen, UART0, VIRTIO0, plic_pri};
 use riscv::register::scause::{self, Exception, Interrupt, Trap};
-use riscv::register::{sie, stvec, sstatus};
+use riscv::register::{sie, sstatus, stvec};
 
 global_asm!(include_str!("asm/trap.S"));
 
@@ -17,11 +19,14 @@ pub fn trap_handler(ctx: &mut TrapFrame) -> &mut TrapFrame {
     match scause.cause() {
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
             timer::set_next_trigger();
+            gpu::flush().unwrap();
             // crate::sched::schedule();
         }
         Trap::Interrupt(Interrupt::SupervisorExternal) => {
             let ch = crate::sbi::console_getchar();
-            println!("get char: {}", ch as u8 as char);
+            let mut tb = graphics::TEXT_BUFFER.lock();
+            tb.putc(ch as u8 as char);
+            drop(tb);
         }
         Trap::Exception(Exception::UserEnvCall) => {
             crate::syscall::do_syscall(ctx);
