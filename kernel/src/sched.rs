@@ -5,7 +5,6 @@ pub fn schedule() {
         fn swtch(old: usize, new: usize);
     }
 
-    println!("Scheduling");
     let mut tm = TASK_MANAGER.lock();
     let (old, new) = tm.switch_task();
     drop(tm);

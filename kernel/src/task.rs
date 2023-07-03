@@ -1,7 +1,6 @@
 extern crate alloc;
 
 use crate::context::{Context, TrapFrame};
-use crate::sched::schedule;
 use crate::sync::SpinLock;
 use alloc::vec::Vec;
 use core::arch::asm;
@@ -19,38 +18,41 @@ pub struct TaskManager {
 #[no_mangle]
 pub fn loop_print() -> ! {
     use config::syscall::*;
-    let pid: usize;
-    unsafe {
-        asm!(
-            "ecall",
-            out("a0") pid,
-            in("a7") SYSCALL_GETPID,
-        );
-    }
-    let string = alloc::format!("Hello from task {}\n", pid);
-    unsafe {
-        asm!(
-            "ecall",
-            inlateout("a0") 1 => _,
-            in("a1") string.as_ptr(),
-            in("a2") string.len(),
-            in("a7") SYSCALL_WRITE,
-        );
-    }
-    for _ in 0..10000000 {
+    loop {
+        let pid: usize;
         unsafe {
-            asm!("nop");
+            asm!(
+                "ecall",
+                out("a0") pid,
+                in("a7") SYSCALL_GETPID,
+            );
+        }
+        let string = alloc::format!("Hello from task {}\n", pid);
+        unsafe {
+            asm!(
+                "ecall",
+                inlateout("a0") 1 => _,
+                in("a1") string.as_ptr(),
+                in("a2") string.len(),
+                in("a7") SYSCALL_WRITE,
+            );
+        }
+        for _ in 0..10000 {
+            for _ in 0..100000 {
+                unsafe {
+                    asm!("nop");
+                }
+            }
+        }
+        // exit
+        unsafe {
+            asm!(
+                "ecall",
+                inlateout("a0") 0 => _,
+                in("a7") SYSCALL_EXIT,
+            );
         }
     }
-    // exit
-    unsafe {
-        asm!(
-            "ecall",
-            inlateout("a0") 0 => _,
-            in("a7") SYSCALL_EXIT,
-        );
-    }
-    unreachable!()
 }
 
 #[no_mangle]
@@ -62,11 +64,25 @@ pub fn forkret() -> ! {
     unreachable!()
 }
 
+/// Spawn task 0
+/// - We don't need to & must not store any context here
+/// as the current context belongs to the kernel main thread.
+/// - The kernel thread should never involve in context switching.
 pub fn init() -> ! {
     let mut tm = TASK_MANAGER.lock();
     tm.init();
+    let sp = tm.tasks[0].context.sp;
+    let ra = tm.tasks[0].context.ra;
     drop(tm);
-    schedule();
+    unsafe {
+        asm!(
+            "mv sp, {}",
+            "mv ra, {}",
+            "ret",
+            in(reg) sp,
+            in(reg) ra
+        );
+    }
     unreachable!()
 }
 

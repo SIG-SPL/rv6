@@ -25,7 +25,9 @@ macro_rules! uprint {
 pub fn do_syscall(context: &mut TrapFrame) {
     match context.regs[SYSCALL_REG_NUM] {
         SYSCALL_EXIT => {
-            println!("exit code: {}", context.regs[SYSCALL_REG_RET]);
+            let tm = crate::task::TASK_MANAGER.lock();
+            debug!("Task {} exited with code: {}", tm.current_pid, context.regs[SYSCALL_REG_RET]);
+            drop(tm);
             schedule();
         }
         SYSCALL_GETPID => {
