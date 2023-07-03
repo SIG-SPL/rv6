@@ -221,6 +221,64 @@ pub enum Font {
     SimHei,
 }
 
+#[rustfmt::skip]
+#[allow(unused, non_snake_case)]
+mod CtrlChar {
+    pub const NUL: char = '\x00';
+    pub const SOH: char = '\x01';
+    pub const STX: char = '\x02';
+    pub const ETX: char = '\x03';
+    pub const EOT: char = '\x04';
+    pub const ENQ: char = '\x05';
+    pub const ACK: char = '\x06';
+    pub const BEL: char = '\x07';
+    pub const BS:  char = '\x08';
+    pub const HT:  char = '\x09';
+    pub const LF:  char = '\x0A';
+    pub const VT:  char = '\x0B';
+    pub const FF:  char = '\x0C';
+    pub const CR:  char = '\x0D';
+    pub const SO:  char = '\x0E';
+    pub const SI:  char = '\x0F';
+    pub const DLE: char = '\x10';
+    pub const DC1: char = '\x11';
+    pub const DC2: char = '\x12';
+    pub const DC3: char = '\x13';
+    pub const DC4: char = '\x14';
+    pub const NAK: char = '\x15';
+    pub const SYN: char = '\x16';
+    pub const ETB: char = '\x17';
+    pub const CAN: char = '\x18';
+    pub const EM:  char = '\x19';
+    pub const SUB: char = '\x1A';
+    pub const ESC: char = '\x1B';
+    pub const FS:  char = '\x1C';
+    pub const GS:  char = '\x1D';
+    pub const RS:  char = '\x1E';
+    pub const US:  char = '\x1F';
+    pub const DEL: char = '\x7F';  
+}
+
+#[derive(Default)]
+#[allow(unused)]
+pub enum InputMode {
+    #[default]
+    Insert,
+    Replace,
+    EscapeState1,
+    EscapeState2,
+}
+
+#[rustfmt::skip]
+#[allow(unused, non_snake_case)]
+mod EscapeCode {
+    pub const START   : char = '[';
+    pub const VK_UP   : char = 'A';
+    pub const VK_DOWN : char = 'B';
+    pub const VK_RIGHT: char = 'C';
+    pub const VK_LEFT : char = 'D';
+}
+
 pub struct TextBuffer {
     /// Text buffer
     pub chars: Vec<char>,
@@ -235,9 +293,11 @@ pub struct TextBuffer {
     pub max_lines: u32,
     /// Current font
     pub font: Font,
+    pub input_mode: InputMode,
 }
 
 /// Returns the index of a displable ascii char in the font array
+/// Unhandled control chars are mapped to the space char
 fn ascii_to_index(c: char) -> usize {
     match c as u8 {
         0x20..=0x7E => (c as u8 - 0x20) as usize,
@@ -281,11 +341,6 @@ fn clear_ascii(px: u32, py: u32) {
     }
 }
 
-pub fn putc(ch: char) {
-    let mut tb = TEXT_BUFFER.lock();
-    tb.putc(ch);
-}
-
 impl TextBuffer {
     pub fn new(font: Font) -> Self {
         let (width, height) = gpu::get_resolution();
@@ -297,6 +352,7 @@ impl TextBuffer {
             line_nchars,
             max_lines,
             font,
+            input_mode: InputMode::default(),
         }
     }
 
@@ -304,43 +360,141 @@ impl TextBuffer {
         (self.cursor.0 * self.line_nchars + self.cursor.1) as usize
     }
 
+    fn scroll(&mut self) {
+        for i in 0..self.max_lines - 1 {
+            // clear & flush the upper line first to avoid font corruption
+            for j in 0..self.line_nchars {
+                let idx = (i * self.line_nchars + j) as usize;
+                self.chars[idx] = ' ';
+            }
+            self.flush_line(i);
+            // move lines up by one
+            for j in 0..self.line_nchars {
+                let idx = (i * self.line_nchars + j) as usize;
+                let idx2 = ((i + 1) * self.line_nchars + j) as usize;
+                self.chars[idx] = self.chars[idx2];
+            }
+        }
+        // clear & flush the last line
+        for j in 0..self.line_nchars {
+            let idx = ((self.max_lines - 1) * self.line_nchars + j) as usize;
+            self.chars[idx] = ' ';
+        }
+        self.flush_line(self.max_lines - 1);
+        // redirect the cursor
+        self.cursor.0 -= 1;
+    }
+
     pub fn putc(&mut self, c: char) {
+        match self.input_mode {
+            InputMode::Insert => self.putc_normal(c),
+            InputMode::Replace => {
+                self.putc_normal(CtrlChar::DEL);
+                self.putc_normal(c);
+            }
+            _ => self.putc_escape(c),
+        }
+    }
+
+    fn putc_escape(&mut self, c: char) {
+        match self.input_mode {
+            InputMode::EscapeState1 => {
+                assert_eq!(c, EscapeCode::START);
+                self.input_mode = InputMode::EscapeState2;
+            }
+            InputMode::EscapeState2 => {
+                match c {
+                    EscapeCode::START => unreachable!(),
+                    EscapeCode::VK_UP => {
+                        println!("up");
+                    }
+                    EscapeCode::VK_DOWN => {
+                        println!("down");
+                    }
+                    EscapeCode::VK_RIGHT => {
+                        println!("right");
+                    }
+                    EscapeCode::VK_LEFT => {
+                        println!("left");
+                    }
+                    _ => (),
+                }
+                self.input_mode = InputMode::Insert;
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    fn putc_normal(&mut self, c: char) {
         match c {
-            '\r' | '\n' => {
+            CtrlChar::CR | CtrlChar::LF => {
                 if self.cursor.0 + 1 >= self.max_lines {
-                    todo!() // scroll
+                    self.scroll();
                 }
                 self.cursor.0 += 1;
                 self.cursor.1 = 0;
+                self.flush();
             }
-            '\x08' | '\x7F' => {
+            CtrlChar::BS | CtrlChar::DEL => {
                 if self.cursor.1 > 0 {
                     self.cursor.1 -= 1;
                     let idx = self.index();
                     self.chars[idx] = ' ';
+                    self.flush_current_line();
                 }
+            }
+            CtrlChar::HT => {
+                for _ in 0..4 {
+                    if self.cursor.1 + 1 < self.line_nchars {
+                        self.putc(' ');
+                    } else {
+                        break;
+                    }
+                }
+            }
+            CtrlChar::ESC => {
+                self.input_mode = InputMode::EscapeState1;
             }
             _ => {
                 if self.cursor.1 + 1 >= self.line_nchars {
-                    todo!() // wrap
+                    self.putc('\n');
                 }
                 let idx = self.index();
                 self.chars[idx] = c;
                 self.cursor.1 += 1;
+                self.flush_current_line();
             }
         }
-        self.flush();
     }
 
-    /// TODO: Only flush the updated chars
+    /// Flush the whole text buffer
+    /// - This function does not clear spaces
+    /// - This is time-consuming!
+    /// - We don't flush GPU in TextBuffer because GPU will be flushed
+    ///    every time the clock ticks, and is much faster
     pub fn flush(&self) {
         for (i, c) in self.chars.iter().enumerate() {
             let x = (i as u32 % self.line_nchars) * CHAR_WIDTH as u32;
             let y = (i as u32 / self.line_nchars) * CHAR_HEIGHT as u32;
-            match c {
+            draw_ascii(x, y, *c, self.font);
+        }
+    }
+
+    /// Flush a single line
+    /// This function clears spaces and avoids font corruption
+    pub fn flush_line(&self, ln: u32) {
+        for j in 0..self.line_nchars {
+            let idx = (ln * self.line_nchars + j) as usize;
+            let x = j * CHAR_WIDTH as u32;
+            let y = ln * CHAR_HEIGHT as u32;
+            match self.chars[idx] {
                 ' ' => clear_ascii(x, y),
-                _ => draw_ascii(x, y, *c, self.font),
+                _ => draw_ascii(x, y, self.chars[idx], self.font),
             }
         }
+    }
+
+    fn flush_current_line(&self) {
+        self.flush_line(self.cursor.0);
     }
 }

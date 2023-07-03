@@ -4,10 +4,31 @@ use crate::sched::schedule;
 use config::std_io::*;
 use config::syscall::*;
 
+struct DispOut;
+
+impl core::fmt::Write for DispOut {
+    fn write_str(&mut self, s: &str) -> core::fmt::Result {
+        let mut tb = crate::graphics::TEXT_BUFFER.lock();
+        for c in s.chars() {
+            tb.putc(c);
+        }
+        Ok(())
+    }
+}
+
+macro_rules! uprint {
+    ($($arg:tt)*) => ({
+        use core::fmt::Write;
+        $crate::syscall::DispOut.write_fmt(format_args!($($arg)*)).unwrap();
+    });
+}
+
 pub fn do_syscall(context: &mut TrapFrame) {
     match context.regs[SYSCALL_REG_NUM] {
         SYSCALL_EXIT => {
-            println!("exit code: {}", context.regs[SYSCALL_REG_RET]);
+            let tm = crate::task::TASK_MANAGER.lock();
+            debug!("Task {} exited with code: {}", tm.current_pid, context.regs[SYSCALL_REG_RET]);
+            drop(tm);
             schedule();
         }
         SYSCALL_GETPID => {
@@ -23,7 +44,7 @@ pub fn do_syscall(context: &mut TrapFrame) {
             unsafe {
                 match fd {
                     STDOUT | STDERR => {
-                        print!(
+                        uprint!(
                             "{}",
                             core::str::from_utf8_unchecked(core::slice::from_raw_parts(p, len))
                         );
