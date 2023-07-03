@@ -42,5 +42,5 @@ test:
 	@cd kernel && cargo test
 
 clean:
-	@rm -f target
+	@rm -r target
 	@rm -f kernel.asm System.map
