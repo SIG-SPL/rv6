@@ -63,10 +63,13 @@ pub mod block {
 
     use virtio_drivers::{device::blk::VirtIOBlk, transport::mmio::MmioTransport, Result};
 
+    use crate::sync::SpinLock;
+
     use super::HalImpl;
 
     /// The global block device. We support only one block device for now.
     static mut DEVICE: Option<VirtIOBlk<HalImpl, MmioTransport>> = None;
+    static mut SPINLOCK: SpinLock<()> = SpinLock::new((), "VirtIOBlkLock");
 
     pub(super) fn init(transport: MmioTransport) {
         if unsafe { DEVICE.is_some() } {
@@ -85,21 +88,29 @@ pub mod block {
     }
 
     /// Wrapper function for writing to the block device.
+    /// The funtion blocks the thread until the write is finished.
+    /// Only one thread can write to the block device at a time.
     pub fn write(block_id: usize, buf: &[u8]) -> Result {
         unsafe {
+            let _lock = SPINLOCK.lock();
             if let Some(ref mut blk) = DEVICE {
                 blk.write_block(block_id, buf)?;
             }
+            drop(_lock);
         }
         Ok(())
     }
 
     /// Wrapper function for reading from the block device.
+    /// The funtion blocks the thread until the read is finished.
+    /// Only one thread can read from the block device at a time.
     pub fn read(block_id: usize, buf: &mut [u8]) -> Result {
         unsafe {
+            let _lock = SPINLOCK.lock();
             if let Some(ref mut blk) = DEVICE {
                 blk.read_block(block_id, buf)?;
             }
+            drop(_lock);
         }
         Ok(())
     }
@@ -107,9 +118,13 @@ pub mod block {
     /// Capacity of the block device in sectors (512 bytes per sector)
     pub fn capacity() -> u64 {
         unsafe {
+            let _lock = SPINLOCK.lock();
             if let Some(ref mut blk) = DEVICE {
-                blk.capacity()
+                let cap = blk.capacity();
+                drop(_lock);
+                cap
             } else {
+                drop(_lock);
                 0
             }
         }
@@ -122,10 +137,16 @@ pub mod gpu {
 
     type Result<T = ()> = core::result::Result<T, ()>;
 
+    use crate::sync::SpinLock;
+
     use super::HalImpl;
 
     static mut DEVICE: Option<VirtIOGpu<HalImpl, MmioTransport>> = None;
     static mut FRAMEBUFFER: Option<&mut [u8]> = None;
+
+    /// Global spinlock for the virtio gpu device.
+    /// The lock blocks the caller if another thread is calling flush or set_pixel.
+    static mut SPINLOCK: SpinLock<()> = SpinLock::new((), "VirtIOGpuLock");
 
     static mut WIDTH: u32 = 0;
     static mut HEIGHT: u32 = 0;
@@ -162,24 +183,16 @@ pub mod gpu {
 
     pub fn flush() -> Result {
         unsafe {
+            let _lock = SPINLOCK.lock();
             if let Some(ref mut gpu) = DEVICE {
                 return match gpu.flush() {
                     Ok(_) => Ok(()),
                     Err(_) => Err(()),
                 };
             }
+            drop(_lock);
         }
         Ok(())
-    }
-
-    pub fn get_framebuffer() -> Result<&'static &'static mut [u8]> {
-        unsafe {
-            if let Some(ref fb) = FRAMEBUFFER {
-                Ok(fb)
-            } else {
-                Err(())
-            }
-        }
     }
 
     pub fn get_resolution() -> (u32, u32) {
@@ -196,6 +209,7 @@ pub mod gpu {
 
     pub fn set_pixel(px: u32, py: u32, r: u8, g: u8, b: u8, alpha: u8) -> Result {
         unsafe {
+            let _lock = SPINLOCK.lock();
             if let Some(ref mut fb) = FRAMEBUFFER {
                 let idx = ((py * get_width() + px) * 4) as usize;
                 (*fb)[idx] = r;
@@ -203,8 +217,9 @@ pub mod gpu {
                 (*fb)[idx + 2] = b;
                 (*fb)[idx + 3] = alpha;
             }
-            Ok(())
+            drop(_lock);
         }
+        Ok(())
     }
 }
 struct HalImpl;
