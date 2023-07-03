@@ -38,7 +38,7 @@ pub fn loop_print() -> ! {
             );
         }
         for _ in 0..10000 {
-            for _ in 0..100000 {
+            for _ in 0..10000 {
                 unsafe {
                     asm!("nop");
                 }

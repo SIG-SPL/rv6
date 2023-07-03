@@ -281,11 +281,6 @@ fn clear_ascii(px: u32, py: u32) {
     }
 }
 
-pub fn putc(ch: char) {
-    let mut tb = TEXT_BUFFER.lock();
-    tb.putc(ch);
-}
-
 impl TextBuffer {
     pub fn new(font: Font) -> Self {
         let (width, height) = gpu::get_resolution();
@@ -304,43 +299,90 @@ impl TextBuffer {
         (self.cursor.0 * self.line_nchars + self.cursor.1) as usize
     }
 
+    fn scroll(&mut self) {
+        for i in 0..self.max_lines - 1 {
+            // clear & flush the upper line first to avoid font corruption
+            for j in 0..self.line_nchars {
+                let idx = (i * self.line_nchars + j) as usize;
+                self.chars[idx] = ' ';
+            }
+            self.flush_line(i);
+            // move lines up by one
+            for j in 0..self.line_nchars {
+                let idx = (i * self.line_nchars + j) as usize;
+                let idx2 = ((i + 1) * self.line_nchars + j) as usize;
+                self.chars[idx] = self.chars[idx2];
+            }
+        }
+        // clear & flush the last line
+        for j in 0..self.line_nchars {
+            let idx = ((self.max_lines - 1) * self.line_nchars + j) as usize;
+            self.chars[idx] = ' ';
+        }
+        self.flush_line(self.max_lines - 1);
+        // redirect the cursor
+        self.cursor.0 -= 1;
+    }
+
     pub fn putc(&mut self, c: char) {
         match c {
             '\r' | '\n' => {
                 if self.cursor.0 + 1 >= self.max_lines {
-                    todo!() // scroll
+                    self.scroll();
                 }
                 self.cursor.0 += 1;
                 self.cursor.1 = 0;
+                self.flush();
             }
             '\x08' | '\x7F' => {
                 if self.cursor.1 > 0 {
                     self.cursor.1 -= 1;
                     let idx = self.index();
                     self.chars[idx] = ' ';
+                    self.flush_current_line();
                 }
             }
             _ => {
                 if self.cursor.1 + 1 >= self.line_nchars {
-                    todo!() // wrap
+                    self.putc('\n');
                 }
                 let idx = self.index();
                 self.chars[idx] = c;
                 self.cursor.1 += 1;
+                self.flush_current_line();
             }
         }
-        self.flush();
+        
     }
 
-    /// TODO: Only flush the updated chars
+    /// Flush the whole text buffer
+    /// - This function does not clear spaces
+    /// - This is time-consuming!
+    /// - We don't flush GPU in TextBuffer because GPU will be flushed
+    ///    every time the clock ticks, and is much faster
     pub fn flush(&self) {
         for (i, c) in self.chars.iter().enumerate() {
             let x = (i as u32 % self.line_nchars) * CHAR_WIDTH as u32;
             let y = (i as u32 / self.line_nchars) * CHAR_HEIGHT as u32;
-            match c {
+            draw_ascii(x, y, *c, self.font);
+        }
+    }
+
+    /// Flush a single line
+    /// This function clears spaces and avoids font corruption
+    pub fn flush_line(&self, ln: u32) {
+        for j in 0..self.line_nchars {
+            let idx = (ln * self.line_nchars + j) as usize;
+            let x = j * CHAR_WIDTH as u32;
+            let y = ln * CHAR_HEIGHT as u32;
+            match self.chars[idx] {
                 ' ' => clear_ascii(x, y),
-                _ => draw_ascii(x, y, *c, self.font),
+                _ => draw_ascii(x, y, self.chars[idx], self.font),
             }
         }
+    }
+
+    fn flush_current_line(&self) {
+        self.flush_line(self.cursor.0);
     }
 }

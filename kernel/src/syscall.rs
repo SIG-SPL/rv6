@@ -8,8 +8,9 @@ struct DispOut;
 
 impl core::fmt::Write for DispOut {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
+        let mut tb = crate::graphics::TEXT_BUFFER.lock();
         for c in s.chars() {
-            crate::graphics::putc(c);
+            tb.putc(c);
         }
         Ok(())
     }
