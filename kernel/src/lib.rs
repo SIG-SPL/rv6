@@ -22,7 +22,7 @@ pub mod sbi;
 pub mod sched;
 mod sync;
 mod syscall;
-pub mod task;
+pub mod proc;
 pub mod trap;
 pub mod virtio;
 

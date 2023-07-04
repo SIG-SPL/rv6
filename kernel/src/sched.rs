@@ -1,13 +1,13 @@
-use crate::task::TASK_MANAGER;
+use crate::proc::PROC_MANAGER;
 
 pub fn schedule() {
     extern "C" {
         fn swtch(old: usize, new: usize);
     }
 
-    let mut tm = TASK_MANAGER.lock();
-    let (old, new) = tm.switch_task();
-    drop(tm);
+    let mut pm = PROC_MANAGER.lock();
+    let (old, new) = pm.switch_task();
+    drop(pm);
     unsafe {
         swtch(old, new);
     }

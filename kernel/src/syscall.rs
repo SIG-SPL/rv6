@@ -26,14 +26,14 @@ macro_rules! uprint {
 pub fn do_syscall(context: &mut TrapFrame) {
     match context.regs[SYSCALL_REG_NUM] {
         SYSCALL_EXIT => {
-            let tm = crate::task::TASK_MANAGER.lock();
-            debug!("Task {} exited with code: {}", tm.current_pid, context.regs[SYSCALL_REG_RET]);
-            drop(tm);
+            let pm = crate::proc::PROC_MANAGER.lock();
+            debug!("Task {} exited with code: {}", pm.current_pid, context.regs[SYSCALL_REG_RET]);
+            drop(pm);
             schedule();
         }
         SYSCALL_GETPID => {
-            let tm = crate::task::TASK_MANAGER.lock();
-            context.regs[SYSCALL_REG_RET] = tm.current_pid;
+            let pm = crate::proc::PROC_MANAGER.lock();
+            context.regs[SYSCALL_REG_RET] = pm.current_pid;
         }
         SYSCALL_WRITE => {
             let fd = context.regs[SYSCALL_REG_ARG0];

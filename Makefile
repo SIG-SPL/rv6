@@ -9,7 +9,14 @@ QEMUOPTS += -drive file=fs.img,format=raw,id=hd0
 QEMUOPTS += -device virtio-blk-device,drive=hd0
 GPUOPTS  =  -device virtio-gpu-device
 
+# TODO: use feature to build nographic
 build:
+	@cd kernel && cargo build
+	@cd kernel && cargo objdump --quiet -- -d > ../kernel.asm 2>/dev/null
+	@cd kernel && cargo nm --quiet > ../System.map 2>/dev/null
+
+# TODO: use feature to build nographic
+build-nographic:
 	@cd kernel && cargo build
 	@cd kernel && cargo objdump --quiet -- -d > ../kernel.asm 2>/dev/null
 	@cd kernel && cargo nm --quiet > ../System.map 2>/dev/null
@@ -21,10 +28,10 @@ release:
 	@cd kernel && cargo build --release
 	@$(QEMU) $(QEMUOPTS) $(GPUOPTS) -kernel $(RElEASETARGET)
 
-nographic: build
+nographic: build-nographic
 	@$(QEMU) $(QEMUOPTS) -nographic -kernel $(DEBUGTARGET)
 
-debug: build
+debug: build-nographic
 	@echo "*** Now run '$(GDB)' in another window." 1>&2
 	$(QEMU) $(QEMUOPTS) -nographic -kernel $(DEBUGTARGET) -s -S
 

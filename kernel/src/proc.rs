@@ -6,12 +6,12 @@ use alloc::vec::Vec;
 use core::arch::asm;
 
 lazy_static! {
-    pub static ref TASK_MANAGER: SpinLock<TaskManager> =
-        SpinLock::new(TaskManager::new(), "TaskManagerLock");
+    pub static ref PROC_MANAGER: SpinLock<Processes> =
+        SpinLock::new(Processes::new(), "ProcManagerLock");
 }
 
-pub struct TaskManager {
-    pub tasks: Vec<Task>,
+pub struct Processes {
+    pub procs: Vec<Process>,
     pub current_pid: usize,
 }
 
@@ -27,7 +27,7 @@ pub fn loop_print() -> ! {
                 in("a7") SYSCALL_GETPID,
             );
         }
-        let string = alloc::format!("Hello from task {}\n", pid);
+        let string = alloc::format!("Hello from process {}\n", pid);
         unsafe {
             asm!(
                 "ecall",
@@ -64,16 +64,16 @@ pub fn forkret() -> ! {
     unreachable!()
 }
 
-/// Spawn task 0
+/// Spawn proc 0
 /// - We don't need to & must not store any context here
 /// as the current context belongs to the kernel main thread.
 /// - The kernel thread should never involve in context switching.
 pub fn init() -> ! {
-    let mut tm = TASK_MANAGER.lock();
-    tm.init();
-    let sp = tm.tasks[0].context.sp;
-    let ra = tm.tasks[0].context.ra;
-    drop(tm);
+    let mut pm = PROC_MANAGER.lock();
+    pm.init();
+    let sp = pm.procs[0].context.sp;
+    let ra = pm.procs[0].context.ra;
+    drop(pm);
     unsafe {
         asm!(
             "mv sp, {}",
@@ -86,10 +86,10 @@ pub fn init() -> ! {
     unreachable!()
 }
 
-impl TaskManager {
+impl Processes {
     pub const fn new() -> Self {
         Self {
-            tasks: Vec::new(),
+            procs: Vec::new(),
             current_pid: 0,
         }
     }
@@ -100,26 +100,26 @@ impl TaskManager {
         }
     }
 
-    pub fn create_task(&mut self) -> &mut Task {
-        let pid = self.tasks.len();
-        let task = Task::new(pid);
-        self.tasks.push(task);
-        &mut self.tasks[pid]
+    pub fn create_task(&mut self) -> &mut Process {
+        let pid = self.procs.len();
+        let proc = Process::new(pid);
+        self.procs.push(proc);
+        &mut self.procs[pid]
     }
 
     pub fn switch_task(&mut self) -> (usize, usize) {
         let current_pid = self.current_pid;
-        let next_pid = (current_pid + 1) % self.tasks.len();
+        let next_pid = (current_pid + 1) % self.procs.len();
         let ctx_new: usize;
         let ctx_old: usize;
         {
-            let next_task = &mut self.tasks[next_pid];
-            next_task.set_state(TaskState::Running);
+            let next_task = &mut self.procs[next_pid];
+            next_task.set_state(ProcState::Running);
             ctx_new = &next_task.context as *const Context as usize;
         }
         {
-            let current_task = &mut self.tasks[current_pid];
-            current_task.set_state(TaskState::Ready);
+            let current_task = &mut self.procs[current_pid];
+            current_task.set_state(ProcState::Ready);
             ctx_old = &current_task.context as *const Context as usize;
         }
         self.current_pid = next_pid;
@@ -128,7 +128,7 @@ impl TaskManager {
 }
 
 #[derive(Default)]
-pub enum TaskState {
+pub enum ProcState {
     Running,
     #[default]
     Ready,
@@ -136,38 +136,38 @@ pub enum TaskState {
     Exited,
 }
 
-/// Task control block
+/// Process control block
 /// Tasks run in user mode, but use kernel memory for now 
 /// because we don't have virtual memory yet.
 #[rustfmt::skip]
 #[repr(align(4096))]
-pub struct Task {
+pub struct Process {
     /// process id
     pub pid:            usize,
     /// task state
-    pub state:          TaskState,
+    pub state:          ProcState,
     /// kernel stack
     pub kstack:         usize,
     pub context:        Context,
     pub trapframe:      TrapFrame,
 }
 
-impl Task {
+impl Process {
     pub fn new(pid: usize) -> Self {
-        let mut task = Self {
+        let mut proc = Self {
             pid,
-            state: TaskState::default(),
+            state: ProcState::default(),
             kstack: 0,
             context: Context::default(),
             trapframe: TrapFrame::default(),
         };
-        task.kstack = &task as *const Task as usize + 4096;
-        task.context.sp = task.kstack;
-        task.context.ra = forkret as usize;
-        task
+        proc.kstack = &proc as *const Process as usize + 4096;
+        proc.context.sp = proc.kstack;
+        proc.context.ra = forkret as usize;
+        proc
     }
 
-    pub fn set_state(&mut self, state: TaskState) {
+    pub fn set_state(&mut self, state: ProcState) {
         self.state = state;
     }
 }
