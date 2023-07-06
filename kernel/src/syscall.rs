@@ -27,7 +27,7 @@ pub fn do_syscall(context: &mut TrapFrame) {
                 match fd {
                     STDOUT | STDERR => {
                         use core::fmt::Write;
-                        crate::stdio::Stdout
+                        crate::io::Stdout
                             .write_str(core::str::from_utf8_unchecked(core::slice::from_raw_parts(
                                 p, len,
                             )))
@@ -49,7 +49,7 @@ pub fn do_syscall(context: &mut TrapFrame) {
                 STDIN => {
                     let mut cnt = 0;
                     for i in 0..len {
-                        let ch = unsafe { crate::stdio::STDIN.pop() };
+                        let ch = unsafe { crate::io::STDIN.pop() };
                         match ch {
                             '\r' | '\n' => {
                                 if cnt > 0 {

@@ -5,7 +5,6 @@
 //! + Directories: inode with special contents (list of other inodes!)
 //! + Names: paths for convenient naming.
 
-
 use crate::sync::SpinLock;
 use config::fs::*;
 use lazy_static::*;
@@ -91,7 +90,7 @@ impl SuperBlock {
 
 /// Disk layer read_block
 fn read_block(blockno: usize, buf: &mut [u8]) {
-    use crate::virtio::block;
+    use crate::io::virtio::block;
     assert_eq!(buf.len(), BSIZE);
     let sector_num = BSIZE / SECTOR_SIZE;
     for i in 0..sector_num {
@@ -105,7 +104,7 @@ fn read_block(blockno: usize, buf: &mut [u8]) {
 
 /// Disk layer write_block
 fn write_block(blockno: usize, buf: &[u8]) {
-    use crate::virtio::block;
+    use crate::io::virtio::block;
     assert_eq!(buf.len(), BSIZE);
     let sector_num = BSIZE / SECTOR_SIZE;
     for i in 0..sector_num {

@@ -1,10 +1,12 @@
+#![allow(dead_code)]
+
 extern crate alloc;
 
 use alloc::vec;
 use alloc::vec::Vec;
 
 use crate::sync::SpinLock;
-use crate::virtio::gpu;
+use super::virtio::gpu;
 
 const CHAR_WIDTH: usize = 8;
 const CHAR_HEIGHT: usize = 16;

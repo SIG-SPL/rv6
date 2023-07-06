@@ -18,7 +18,7 @@ pub fn trap_handler(ctx: &mut TrapFrame) -> &mut TrapFrame {
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
             timer::set_next_trigger();
             #[cfg(feature = "graphics")]
-            crate::virtio::gpu::flush().unwrap();
+            crate::io::virtio::gpu::flush().unwrap();
             // crate::sched::schedule();
         }
         Trap::Interrupt(Interrupt::SupervisorExternal) => {
@@ -32,7 +32,7 @@ pub fn trap_handler(ctx: &mut TrapFrame) -> &mut TrapFrame {
             // echo
             #[cfg(feature = "graphics")]
             {
-                let mut tb = crate::graphics::TEXT_BUFFER.lock();
+                let mut tb = crate::io::graphics::TEXT_BUFFER.lock();
                 tb.putc(ch);
             }
             #[cfg(not(feature = "graphics"))]
@@ -41,7 +41,7 @@ pub fn trap_handler(ctx: &mut TrapFrame) -> &mut TrapFrame {
             }
             // push to stdin
             unsafe {
-                crate::stdio::STDIN.push(ch);
+                crate::io::STDIN.push(ch);
             }
         }
         Trap::Exception(Exception::UserEnvCall) => {

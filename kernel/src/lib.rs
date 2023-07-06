@@ -16,17 +16,15 @@ mod context;
 pub mod console;
 pub mod allocator;
 pub mod fs;
-pub mod graphics;
+pub mod io;
 mod loader;
 pub mod logging;
 pub mod proc;
 pub mod sbi;
 pub mod sched;
-pub mod stdio;
 mod sync;
 mod syscall;
 pub mod trap;
-pub mod virtio;
 
 #[macro_use]
 extern crate log;

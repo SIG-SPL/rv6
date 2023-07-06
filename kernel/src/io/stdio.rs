@@ -10,7 +10,7 @@ pub struct Stdout;
 impl core::fmt::Write for Stdout {
     #[cfg(feature = "graphics")]
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        let mut tb = crate::graphics::TEXT_BUFFER.lock();
+        let mut tb = super::graphics::TEXT_BUFFER.lock();
         for c in s.chars() {
             tb.putc(c);
         }
