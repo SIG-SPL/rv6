@@ -9,13 +9,11 @@ QEMUOPTS += -drive file=fs.img,format=raw,id=hd0
 QEMUOPTS += -device virtio-blk-device,drive=hd0
 GPUOPTS  =  -device virtio-gpu-device
 
-# TODO: use feature to build nographic
 build:
-	@cd kernel && cargo build
+	@cd kernel && cargo build --features graphics
 	@cd kernel && cargo objdump --quiet -- -d > ../kernel.asm 2>/dev/null
 	@cd kernel && cargo nm --quiet > ../System.map 2>/dev/null
 
-# TODO: use feature to build nographic
 build-nographic:
 	@cd kernel && cargo build
 	@cd kernel && cargo objdump --quiet -- -d > ../kernel.asm 2>/dev/null
@@ -25,7 +23,7 @@ run: build
 	@$(QEMU) $(QEMUOPTS) $(GPUOPTS) -kernel $(DEBUGTARGET)
 
 release:
-	@cd kernel && cargo build --release
+	@cd kernel && cargo build --release --features graphics
 	@$(QEMU) $(QEMUOPTS) $(GPUOPTS) -kernel $(RElEASETARGET)
 
 nographic: build-nographic

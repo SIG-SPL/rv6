@@ -24,9 +24,13 @@ pub fn trap_handler(ctx: &mut TrapFrame) -> &mut TrapFrame {
         }
         Trap::Interrupt(Interrupt::SupervisorExternal) => {
             let ch = crate::sbi::console_getchar();
-            let mut tb = graphics::TEXT_BUFFER.lock();
-            tb.putc(ch as u8 as char);
-            drop(tb);
+            #[cfg(feature = "graphics")] {
+                let mut tb = graphics::TEXT_BUFFER.lock();
+                tb.putc(ch as u8 as char);
+            }
+            #[cfg(not(feature = "graphics"))] {
+                crate::sbi::console_putchar(ch);
+            }
         }
         Trap::Exception(Exception::UserEnvCall) => {
             crate::syscall::do_syscall(ctx);
