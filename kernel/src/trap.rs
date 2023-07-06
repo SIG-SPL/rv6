@@ -22,13 +22,21 @@ pub fn trap_handler(ctx: &mut TrapFrame) -> &mut TrapFrame {
             // crate::sched::schedule();
         }
         Trap::Interrupt(Interrupt::SupervisorExternal) => {
-            let ch = crate::sbi::console_getchar();
-            #[cfg(feature = "graphics")] {
+            // We currently only support UART interrupts.
+            let ch = crate::sbi::console_getchar() as u8 as char;
+            // echo
+            #[cfg(feature = "graphics")]
+            {
                 let mut tb = crate::graphics::TEXT_BUFFER.lock();
-                tb.putc(ch as u8 as char);
+                tb.putc(ch);
             }
-            #[cfg(not(feature = "graphics"))] {
-                crate::sbi::console_putchar(ch);
+            #[cfg(not(feature = "graphics"))]
+            {
+                crate::sbi::console_putchar(ch as u8 as usize);
+            }
+            // push to stdin
+            unsafe {
+                crate::stdio::STDIN.push(ch);
             }
         }
         Trap::Exception(Exception::UserEnvCall) => {

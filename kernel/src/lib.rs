@@ -22,6 +22,7 @@ pub mod logging;
 pub mod proc;
 pub mod sbi;
 pub mod sched;
+pub mod stdio;
 mod sync;
 mod syscall;
 pub mod trap;

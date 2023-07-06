@@ -21,7 +21,11 @@ fn sbi_call(eid: usize, fid: usize, arg0: usize, arg1: usize, arg2: usize) -> us
 }
 
 pub fn console_putchar(c: usize) {
-    sbi_call(SBI_CONSOLE_PUTCHAR, 0, c, 0, 0);
+    let ch = match c as u8 as char {
+        '\r' => '\n',
+        _ => c as u8 as char,
+    } as usize;
+    sbi_call(SBI_CONSOLE_PUTCHAR, 0, ch, 0, 0);
 }
 
 pub fn console_getchar() -> usize {

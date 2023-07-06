@@ -27,7 +27,7 @@ pub fn loop_print() -> ! {
                 in("a7") SYSCALL_GETPID,
             );
         }
-        let string = alloc::format!("Hello from process {}\n", pid);
+        let string = alloc::format!("Hello from process {}\n Say something: ", pid);
         unsafe {
             asm!(
                 "ecall",
@@ -37,6 +37,36 @@ pub fn loop_print() -> ! {
                 in("a7") SYSCALL_WRITE,
             );
         }
+        let mut buf = [0u8; 128];
+        unsafe {
+            asm!(
+                "ecall",
+                inlateout("a0") 0 => _,
+                in("a1") buf.as_mut_ptr(),
+                in("a2") buf.len(),
+                in("a7") SYSCALL_READ,
+            );
+        }
+        let string = alloc::format!("You said: ");
+        unsafe {
+            asm!(
+                "ecall",
+                inlateout("a0") 1 => _,
+                in("a1") string.as_ptr(),
+                in("a2") string.len(),
+                in("a7") SYSCALL_WRITE,
+            );
+        }
+        unsafe {
+            asm!(
+                "ecall",
+                inlateout("a0") 1 => _,
+                in("a1") buf.as_ptr(),
+                in("a2") buf.len(),
+                in("a7") SYSCALL_WRITE,
+            );
+        }
+        loop {}
         for _ in 0..10000 {
             for _ in 0..10000 {
                 unsafe {
