@@ -9,33 +9,22 @@ QEMUOPTS += -drive file=fs.img,format=raw,id=hd0
 QEMUOPTS += -device virtio-blk-device,drive=hd0
 GPUOPTS  =  -device virtio-gpu-device
 
+# Build in debug mode. Debug mode disables GPU by default.
 build:
-	@cd kernel && cargo build --features graphics
-	@cd kernel && cargo objdump --quiet -- -d > ../kernel.asm 2>/dev/null
-	@cd kernel && cargo nm --quiet > ../System.map 2>/dev/null
-
-build-nographic:
 	@cd kernel && cargo build
 	@cd kernel && cargo objdump --quiet -- -d > ../kernel.asm 2>/dev/null
 	@cd kernel && cargo nm --quiet > ../System.map 2>/dev/null
 
 run: build 
-	@$(QEMU) $(QEMUOPTS) $(GPUOPTS) -kernel $(DEBUGTARGET)
+	@$(QEMU) $(QEMUOPTS) -nographic -kernel $(DEBUGTARGET)
 
 release:
 	@cd kernel && cargo build --release --features graphics
 	@$(QEMU) $(QEMUOPTS) $(GPUOPTS) -kernel $(RElEASETARGET)
 
-nographic: build-nographic
-	@$(QEMU) $(QEMUOPTS) -nographic -kernel $(DEBUGTARGET)
-
-debug: build-nographic
+debug: build
 	@echo "*** Now run '$(GDB)' in another window." 1>&2
 	$(QEMU) $(QEMUOPTS) -nographic -kernel $(DEBUGTARGET) -s -S
-
-debug-graphic: build
-	@echo "*** Now run '$(GDB)' in another window." 1>&2
-	$(QEMU) $(QEMUOPTS) $(GPUOPTS) -kernel $(DEBUGTARGET) -s -S
 
 test:
 	@echo "         _____         _     _  __                    _"

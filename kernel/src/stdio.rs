@@ -38,7 +38,7 @@ pub struct Stdin {
 }
 
 impl Stdin {
-    pub const fn new() -> Self {
+    const fn new() -> Self {
         Self {
             chars: VecDeque::new(),
         }
@@ -54,9 +54,7 @@ impl Stdin {
             let c = self.chars.pop_front();
             match c {
                 Some(ch) => return ch,
-                None => {
-                    // println!("No char available. Waiting...")
-                } // TODO: Block the thread.
+                None => (), // TODO: Block the thread.
             }
             // Ideally, when a thread is woken up, the program counter
             //   goes here and tries to pop again.
