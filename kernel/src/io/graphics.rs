@@ -5,6 +5,7 @@ extern crate alloc;
 use alloc::vec;
 use alloc::vec::Vec;
 
+use crate::console::{CtrlChar, EscapeCode, InputMode};
 use crate::sync::SpinLock;
 use super::virtio::gpu;
 
@@ -221,64 +222,6 @@ pub enum Font {
     #[default]
     SimSun,
     SimHei,
-}
-
-#[rustfmt::skip]
-#[allow(unused, non_snake_case)]
-mod CtrlChar {
-    pub const NUL: char = '\x00';
-    pub const SOH: char = '\x01';
-    pub const STX: char = '\x02';
-    pub const ETX: char = '\x03';
-    pub const EOT: char = '\x04';
-    pub const ENQ: char = '\x05';
-    pub const ACK: char = '\x06';
-    pub const BEL: char = '\x07';
-    pub const BS:  char = '\x08';
-    pub const HT:  char = '\x09';
-    pub const LF:  char = '\x0A';
-    pub const VT:  char = '\x0B';
-    pub const FF:  char = '\x0C';
-    pub const CR:  char = '\x0D';
-    pub const SO:  char = '\x0E';
-    pub const SI:  char = '\x0F';
-    pub const DLE: char = '\x10';
-    pub const DC1: char = '\x11';
-    pub const DC2: char = '\x12';
-    pub const DC3: char = '\x13';
-    pub const DC4: char = '\x14';
-    pub const NAK: char = '\x15';
-    pub const SYN: char = '\x16';
-    pub const ETB: char = '\x17';
-    pub const CAN: char = '\x18';
-    pub const EM:  char = '\x19';
-    pub const SUB: char = '\x1A';
-    pub const ESC: char = '\x1B';
-    pub const FS:  char = '\x1C';
-    pub const GS:  char = '\x1D';
-    pub const RS:  char = '\x1E';
-    pub const US:  char = '\x1F';
-    pub const DEL: char = '\x7F';  
-}
-
-#[derive(Default)]
-#[allow(unused)]
-pub enum InputMode {
-    #[default]
-    Insert,
-    Replace,
-    EscapeState1,
-    EscapeState2,
-}
-
-#[rustfmt::skip]
-#[allow(unused, non_snake_case)]
-mod EscapeCode {
-    pub const START   : char = '[';
-    pub const VK_UP   : char = 'A';
-    pub const VK_DOWN : char = 'B';
-    pub const VK_RIGHT: char = 'C';
-    pub const VK_LEFT : char = 'D';
 }
 
 pub struct TextBuffer {
