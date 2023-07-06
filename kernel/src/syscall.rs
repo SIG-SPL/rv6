@@ -1,44 +1,18 @@
 use crate::TrapFrame;
 
-use crate::sched::schedule;
 use config::std_io::*;
 use config::syscall::*;
-
-struct StdOut;
-
-impl core::fmt::Write for StdOut {
-    #[cfg(feature = "graphics")]
-    fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        let mut tb = crate::graphics::TEXT_BUFFER.lock();
-        for c in s.chars() {
-            tb.putc(c);
-        }
-        Ok(())
-    }
-
-    #[cfg(not(feature = "graphics"))]
-    fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        for c in s.chars() {
-            crate::sbi::console_putchar(c as usize);
-        }
-        Ok(())
-    }
-}
-
-macro_rules! uprint {
-    ($($arg:tt)*) => ({
-        use core::fmt::Write;
-        $crate::syscall::StdOut.write_fmt(format_args!($($arg)*)).unwrap();
-    });
-}
 
 pub fn do_syscall(context: &mut TrapFrame) {
     match context.regs[SYSCALL_REG_NUM] {
         SYSCALL_EXIT => {
             let pm = crate::proc::PROC_MANAGER.lock();
-            debug!("Task {} exited with code: {}", pm.current_pid, context.regs[SYSCALL_REG_RET]);
+            debug!(
+                "Task {} exited with code: {}",
+                pm.current_pid, context.regs[SYSCALL_REG_RET]
+            );
             drop(pm);
-            schedule();
+            crate::sched::schedule();
         }
         SYSCALL_GETPID => {
             let pm = crate::proc::PROC_MANAGER.lock();
@@ -53,10 +27,12 @@ pub fn do_syscall(context: &mut TrapFrame) {
             unsafe {
                 match fd {
                     STDOUT | STDERR => {
-                        uprint!(
-                            "{}",
-                            core::str::from_utf8_unchecked(core::slice::from_raw_parts(p, len))
-                        );
+                        use core::fmt::Write;
+                        crate::stdio::Stdout
+                            .write_str(core::str::from_utf8_unchecked(core::slice::from_raw_parts(
+                                p, len,
+                            )))
+                            .unwrap();
                     }
                     _ => todo!(
                         "only support stdout/stderr, which is fd=1/2, but got fd={}",
@@ -70,7 +46,23 @@ pub fn do_syscall(context: &mut TrapFrame) {
             let fd = context.regs[SYSCALL_REG_ARG0];
             let buf = context.regs[SYSCALL_REG_ARG1] as *mut u8;
             let len = context.regs[SYSCALL_REG_ARG2];
-            todo!("read from fd={}, buf={:p}, len={}", fd, buf, len);
+            match fd {
+                STDIN => {
+                    let mut cnt = 0;
+                    for i in 0..len {
+                        let ch = unsafe { crate::stdio::STDIN.pop() };
+                        match ch {
+                            '\r' | '\n' => break,
+                            _ => unsafe {
+                                *buf.add(i) = ch as u8;
+                            },
+                        }
+                        cnt += 1;
+                    }
+                    debug!("read from fd={}, buf={:p}, len={}", fd, buf, cnt);
+                }
+                _ => todo!("only support stdin, which is fd=0, but got fd={}", fd),
+            }
         }
         SYSCALL_SLEEP => {
             let time = context.regs[SYSCALL_REG_ARG0];

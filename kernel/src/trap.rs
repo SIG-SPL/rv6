@@ -1,5 +1,4 @@
 use crate::context::TrapFrame;
-use crate::graphics;
 use crate::virtio::gpu;
 use config::layout::{plic_pri, plic_sen, plic_spri, UART0, VIRTIO0};
 use core::arch::global_asm;
@@ -23,13 +22,21 @@ pub fn trap_handler(ctx: &mut TrapFrame) -> &mut TrapFrame {
             // crate::sched::schedule();
         }
         Trap::Interrupt(Interrupt::SupervisorExternal) => {
-            let ch = crate::sbi::console_getchar();
-            #[cfg(feature = "graphics")] {
-                let mut tb = graphics::TEXT_BUFFER.lock();
-                tb.putc(ch as u8 as char);
+            // We currently only support UART interrupts.
+            let ch = crate::sbi::console_getchar() as u8 as char;
+            // echo
+            #[cfg(feature = "graphics")]
+            {
+                let mut tb = crate::graphics::TEXT_BUFFER.lock();
+                tb.putc(ch);
             }
-            #[cfg(not(feature = "graphics"))] {
-                crate::sbi::console_putchar(ch);
+            #[cfg(not(feature = "graphics"))]
+            {
+                crate::sbi::console_putchar(ch as u8 as usize);
+            }
+            // push to stdin
+            unsafe {
+                crate::stdio::STDIN.push(ch);
             }
         }
         Trap::Exception(Exception::UserEnvCall) => {
