@@ -15,6 +15,7 @@ mod context;
 #[macro_use]
 pub mod console;
 pub mod allocator;
+pub mod fs;
 pub mod graphics;
 mod loader;
 pub mod logging;

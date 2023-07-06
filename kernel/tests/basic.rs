@@ -45,9 +45,12 @@ fn test_alloc() {
 #[test_case]
 fn test_virtio_blk_rw() {
     use kernel::virtio::block;
+    let mut origin = alloc::vec![0x0; 512];
     let input = alloc::vec![0xffu8; 512];
     let mut output = alloc::vec![0; 512];
+    block::read(0, &mut origin).unwrap();
     block::write(0, &input).unwrap();
     block::read(0, &mut output).unwrap();
     assert_eq!(input, output);
+    block::write(0, &origin).unwrap();
 }

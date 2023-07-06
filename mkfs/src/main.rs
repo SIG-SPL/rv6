@@ -12,29 +12,10 @@ use std::{
     process::exit,
 };
 
-/// Block size
-pub const BSIZE: u32 = 1024;
-/// Number of inodes
-pub const NINODES: u32 = 200;
-/// Root inode number
-pub const ROOTINO: usize = 1;
-/// size of file system in blocks
-pub const FSSIZE: u32 = 2000;
-/// max # of blocks any FS request
-pub const MAXOPBLOCKS: u32 = 10;
-/// size of log
-pub const LOGSIZE: u32 = MAXOPBLOCKS * 3;
-/// size of disk block cache
-pub const NBUF: u32 = MAXOPBLOCKS * 3;
-/// maximum file path name
-pub const MAXPATH: usize = 128;
+use config::fs::*;
 
-pub const NBITMAP: u32 = FSSIZE / BSIZE + 1;
-pub const IPB: u32 = BSIZE / std::mem::size_of::<DInode>() as u32;
+pub const IPB: u32 = BSIZE as u32 / std::mem::size_of::<DInode>() as u32;
 pub const NINODEBLOCKS: u32 = NINODES / IPB + 1;
-
-pub const NDIRECT: usize = 12;
-pub const MAGIC: u32 = 0x10203040;
 
 /// On-disk inode structure
 #[repr(C)]
@@ -77,7 +58,7 @@ pub struct SuperBlock {
 
 fn write_sp(fsfd: &mut File) {
     let sb = SuperBlock {
-        magic: MAGIC,
+        magic: FS_MAGIC,
         size: FSSIZE,
         nblocks: FSSIZE,
         ninodes: NINODES,
@@ -86,10 +67,11 @@ fn write_sp(fsfd: &mut File) {
         inodestart: 2 + LOGSIZE,
         bmapstart: 2 + LOGSIZE + NINODEBLOCKS,
     };
-    fsfd.seek(std::io::SeekFrom::Start(0)).unwrap_or_else(|e| {
-        eprintln!("cannot seek fs.img: {}", e);
-        exit(1);
-    });
+    fsfd.seek(std::io::SeekFrom::Start(BSIZE as u64))
+        .unwrap_or_else(|e| {
+            eprintln!("cannot seek fs.img: {}", e);
+            exit(1);
+        });
     let sb_bytes = unsafe {
         std::slice::from_raw_parts(
             &sb as *const SuperBlock as *const u8,
@@ -120,12 +102,13 @@ fn main() {
             exit(1);
         });
     // let nmeta = 2 + nlog + ninodeblocks + nbitmap;
-    fs.set_len((FSSIZE * BSIZE) as u64).unwrap_or_else(|e| {
-        eprintln!("cannot set fs.img size: {}", e);
-        exit(1);
-    });
+    fs.set_len((FSSIZE * BSIZE as u32) as u64)
+        .unwrap_or_else(|e| {
+            eprintln!("cannot set fs.img size: {}", e);
+            exit(1);
+        });
     write_sp(&mut fs);
-    let buf = [0u8; BSIZE as usize];
+    let buf = [0u8; BSIZE];
     for _ in 0..LOGSIZE {
         fs.write_all(&buf).unwrap_or_else(|e| {
             eprintln!("cannot write log to fs.img: {}", e);

@@ -38,7 +38,7 @@ struct ProgramHeader {
 }
 
 /// Analyze elf file and load it into memory
-pub fn load_file(start: usize) -> u64 {
+pub fn _load_file(start: usize) -> u64 {
     // let start = info.offset;
     let elf = unsafe { &*(start as *const u8 as *const ElfHeader) };
     assert_eq!(elf.magic, [0x7f, 0x45, 0x4c, 0x46]); // elf magic

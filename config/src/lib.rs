@@ -22,7 +22,7 @@ pub mod sbi {
     pub const SBI_SHUTDOWN: usize = 0;
 }
 
-/* Interface of operating system and applications */
+/// Interface of operating system and applications
 #[rustfmt::skip]
 pub mod syscall {
     /// syscall number
@@ -55,7 +55,7 @@ pub mod syscall {
 pub mod layout {
     /*
      * ============= Physical Address Layout in QEMU =============
-     * 
+     *
      *  0x7ffffffff +------------------+
      *              |       ...        |
      *  0x87ffffff  +------------------+ <- PHY_STOP
@@ -81,7 +81,7 @@ pub mod layout {
      *  0x0000ffff  |------------------|
      *              |     FIRMWARE     |
      *  0x00001000  +------------------+ <- riscv_virt_board.mrom
-     * 
+     *
      */
     pub const PLIC_BASE: usize = 0xc000000;
     pub const PLIC_SENABLE_BASE: usize = PLIC_BASE + 0x2080;
@@ -114,9 +114,38 @@ pub mod layout {
     }
 }
 
-/* Standard input/output/error settings */
+/// Standard input/output/error settings
 pub mod std_io {
     pub const STDIN: usize = 0;
     pub const STDOUT: usize = 1;
     pub const STDERR: usize = 2;
+}
+
+/// File system configuration
+pub mod fs {
+    /// Block size
+    pub const BSIZE: usize = 1024;
+    /// Number of inodes
+    pub const NINODES: u32 = 200;
+    /// Root inode number
+    pub const ROOTINO: u32 = 1;
+    /// size of file system in blocks
+    pub const FSSIZE: u32 = 2000;
+    /// max # of blocks any FS request
+    pub const MAXOPBLOCKS: u32 = 10;
+    /// size of log
+    pub const LOGSIZE: u32 = MAXOPBLOCKS * 3;
+    /// size of disk block cache
+    pub const NBUF: u32 = MAXOPBLOCKS * 3;
+    /// maximum file path name
+    pub const MAXPATH: usize = 128;
+
+    pub const NBITMAP: u32 = FSSIZE / BSIZE as u32 + 1;
+
+    pub const NDIRECT: usize = 12;
+    /// magic number for file system super block
+    pub const FS_MAGIC: u32 = 0x10203040;
+
+    /// Inode start block
+    pub const INDOE_START: usize = 32;
 }
