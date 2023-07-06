@@ -4,13 +4,22 @@ use crate::sched::schedule;
 use config::std_io::*;
 use config::syscall::*;
 
-struct DispOut;
+struct StdOut;
 
-impl core::fmt::Write for DispOut {
+impl core::fmt::Write for StdOut {
+    #[cfg(feature = "graphics")]
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
         let mut tb = crate::graphics::TEXT_BUFFER.lock();
         for c in s.chars() {
             tb.putc(c);
+        }
+        Ok(())
+    }
+
+    #[cfg(not(feature = "graphics"))]
+    fn write_str(&mut self, s: &str) -> core::fmt::Result {
+        for c in s.chars() {
+            crate::sbi::console_putchar(c as usize);
         }
         Ok(())
     }
@@ -19,7 +28,7 @@ impl core::fmt::Write for DispOut {
 macro_rules! uprint {
     ($($arg:tt)*) => ({
         use core::fmt::Write;
-        $crate::syscall::DispOut.write_fmt(format_args!($($arg)*)).unwrap();
+        $crate::syscall::StdOut.write_fmt(format_args!($($arg)*)).unwrap();
     });
 }
 
