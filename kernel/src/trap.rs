@@ -1,5 +1,4 @@
 use crate::context::TrapFrame;
-use crate::virtio::gpu;
 use config::layout::{plic_pri, plic_sen, plic_spri, UART0, VIRTIO0};
 use core::arch::global_asm;
 use riscv::register::scause::{self, Exception, Interrupt, Trap};
@@ -18,12 +17,18 @@ pub fn trap_handler(ctx: &mut TrapFrame) -> &mut TrapFrame {
     match scause.cause() {
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
             timer::set_next_trigger();
-            gpu::flush().unwrap();
+            #[cfg(feature = "graphics")]
+            crate::virtio::gpu::flush().unwrap();
             // crate::sched::schedule();
         }
         Trap::Interrupt(Interrupt::SupervisorExternal) => {
             // We currently only support UART interrupts.
-            let ch = crate::sbi::console_getchar() as u8 as char;
+            // TODO: Read the PLIC's claim/complete register to determine
+            //   which device generated the interrupt.
+            let mut ch = crate::sbi::console_getchar() as u8 as char;
+            if ch == '\r' {
+                ch = '\n';
+            }
             // echo
             #[cfg(feature = "graphics")]
             {
@@ -40,6 +45,9 @@ pub fn trap_handler(ctx: &mut TrapFrame) -> &mut TrapFrame {
             }
         }
         Trap::Exception(Exception::UserEnvCall) => {
+            // This is crucial because SIE bit is cleared when exception occurs.
+            // To receive ext intrs when handling syscalls, we need to set it again.
+            intr_on();
             crate::syscall::do_syscall(ctx);
         }
         Trap::Exception(Exception::IllegalInstruction) => {
@@ -77,7 +85,7 @@ pub fn init(hartid: usize) {
         sie::set_sext();
         sie::set_stimer();
         // enable PLIC by setting desired IRQ priorities nonzero
-        (plic_pri(UART0) as *mut u32).write_volatile(1);
+        (plic_pri(UART0) as *mut u32).write_volatile(7);
         (plic_pri(VIRTIO0) as *mut u32).write_volatile(1);
         // set enable bits
         (plic_sen(hartid) as *mut u32).write_volatile((1 << UART0) | (1 << VIRTIO0));
