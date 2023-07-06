@@ -27,28 +27,32 @@ pub fn loop_print() -> ! {
                 in("a7") SYSCALL_GETPID,
             );
         }
-        let string = alloc::format!("Hello from process {}\n Say something: ", pid);
+        let string = alloc::format!("Hello from process {}\nSay something: ", pid);
         unsafe {
             asm!(
                 "ecall",
-                inlateout("a0") 1 => _,
+                inlateout("a0") config::std_io::STDOUT => _,
                 in("a1") string.as_ptr(),
                 in("a2") string.len(),
                 in("a7") SYSCALL_WRITE,
             );
         }
         let mut buf = [0u8; 128];
+        let len: usize;
         unsafe {
             asm!(
                 "ecall",
-                inlateout("a0") 0 => _,
+                inlateout("a0") config::std_io::STDIN => len,
                 in("a1") buf.as_mut_ptr(),
                 in("a2") buf.len(),
                 in("a7") SYSCALL_READ,
             );
         }
-        let string = alloc::format!("You said: ");
         unsafe {
+            let string = alloc::format!(
+                "You said: {:?}\n",
+                core::str::from_utf8_unchecked(core::slice::from_raw_parts(buf.as_ptr(), len))
+            );
             asm!(
                 "ecall",
                 inlateout("a0") 1 => _,
@@ -56,23 +60,6 @@ pub fn loop_print() -> ! {
                 in("a2") string.len(),
                 in("a7") SYSCALL_WRITE,
             );
-        }
-        unsafe {
-            asm!(
-                "ecall",
-                inlateout("a0") 1 => _,
-                in("a1") buf.as_ptr(),
-                in("a2") buf.len(),
-                in("a7") SYSCALL_WRITE,
-            );
-        }
-        loop {}
-        for _ in 0..10000 {
-            for _ in 0..10000 {
-                unsafe {
-                    asm!("nop");
-                }
-            }
         }
         // exit
         unsafe {

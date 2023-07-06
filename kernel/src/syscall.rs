@@ -22,7 +22,6 @@ pub fn do_syscall(context: &mut TrapFrame) {
             let fd = context.regs[SYSCALL_REG_ARG0];
             let buf = context.regs[SYSCALL_REG_ARG1] as *const u8;
             let len = context.regs[SYSCALL_REG_ARG2];
-            debug!("write: fd={}, buf={:p}, len={}", fd, buf, len);
             let p = buf;
             unsafe {
                 match fd {
@@ -52,14 +51,18 @@ pub fn do_syscall(context: &mut TrapFrame) {
                     for i in 0..len {
                         let ch = unsafe { crate::stdio::STDIN.pop() };
                         match ch {
-                            '\r' | '\n' => break,
+                            '\r' | '\n' => {
+                                if cnt > 0 {
+                                    break;
+                                }
+                            },
                             _ => unsafe {
                                 *buf.add(i) = ch as u8;
+                                cnt += 1;
                             },
                         }
-                        cnt += 1;
                     }
-                    debug!("read from fd={}, buf={:p}, len={}", fd, buf, cnt);
+                    context.regs[SYSCALL_REG_RET] = cnt;
                 }
                 _ => todo!("only support stdin, which is fd=0, but got fd={}", fd),
             }
