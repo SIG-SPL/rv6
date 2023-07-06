@@ -15,14 +15,15 @@ mod context;
 #[macro_use]
 pub mod console;
 pub mod allocator;
+pub mod fs;
 pub mod graphics;
 mod loader;
 pub mod logging;
+pub mod proc;
 pub mod sbi;
 pub mod sched;
 mod sync;
 mod syscall;
-pub mod proc;
 pub mod trap;
 pub mod virtio;
 

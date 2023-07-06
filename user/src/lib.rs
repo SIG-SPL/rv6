@@ -7,6 +7,8 @@ use core::panic::PanicInfo;
 
 use config::syscall::*;
 
+mod fs;
+
 pub fn syscall(id: usize, arg0: usize, arg1: usize, arg2: usize) -> usize {
     let ret;
     unsafe {

@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use core::cell::UnsafeCell;
 use core::ops::{Deref, DerefMut};
 use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};

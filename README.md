@@ -26,6 +26,7 @@ brew install riscv-gnu-toolchain
 ## Run
 
 ```bash
+make fs # build the filesystem image, only need to run once
 make run
 ```
 
@@ -37,7 +38,7 @@ riscv64-unknown-elf-gdb # in another terminal
 ```
 
 ## Features(Goal)
-- [ ] process manage and context switch
+- [x] process manage and context switch
 - [ ] system call like xv6's
 - [ ] simple crash-free filesystem like xv6's
 - [ ] **simple bootstrap compiler running inside the os(so we have everything in principle)**

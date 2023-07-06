@@ -46,6 +46,11 @@ test:
 	@echo "        ================================================"
 	@cd kernel && cargo test
 
+fs:
+	@cd mkfs && cargo run fs.img
+	@mv mkfs/fs.img .
+	@ln -s fs.img kernel/fs.img
+
 clean:
 	@rm -r target
 	@rm -f kernel.asm System.map
