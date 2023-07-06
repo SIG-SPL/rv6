@@ -59,6 +59,7 @@ fn virtio_mmio_init(node: FdtNode) {
     }
 }
 
+#[allow(unused)]
 pub mod block {
 
     use virtio_drivers::{device::blk::VirtIOBlk, transport::mmio::MmioTransport, Result};
@@ -126,6 +127,7 @@ pub mod block {
     }
 }
 
+#[allow(unused)]
 pub mod gpu {
 
     use virtio_drivers::{device::gpu::VirtIOGpu, transport::mmio::MmioTransport};
