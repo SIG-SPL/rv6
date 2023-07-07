@@ -74,10 +74,8 @@ pub fn loop_print() -> ! {
 
 #[no_mangle]
 pub fn forkret() -> ! {
-    unsafe {
-        riscv::register::sepc::write(loop_print as usize);
-        asm!("sret")
-    }
+    riscv::register::sepc::write(loop_print as usize);
+    sret!();
     unreachable!()
 }
 
@@ -91,15 +89,9 @@ pub fn init() -> ! {
     let sp = pm.procs[0].context.sp;
     let ra = pm.procs[0].context.ra;
     drop(pm);
-    unsafe {
-        asm!(
-            "mv sp, {}",
-            "mv ra, {}",
-            "ret",
-            in(reg) sp,
-            in(reg) ra
-        );
-    }
+    write_reg!(sp, sp);
+    write_reg!(ra, ra);
+    ret!();
     unreachable!()
 }
 
