@@ -129,9 +129,10 @@ impl Stdin {
     pub fn pop(&mut self) -> char {
         loop {
             let c = self.chars.pop_front();
-            match c {
-                Some(ch) => return ch,
-                None => (), // TODO: Block the thread.
+            if let Some(ch) = c {
+                return ch;
+            } else {
+                // TODO: Block the thread.
             }
             // Ideally, when a thread is woken up, the program counter
             //   goes here and tries to pop again.

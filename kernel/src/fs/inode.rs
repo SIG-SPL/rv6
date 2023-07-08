@@ -1,8 +1,10 @@
 //! Inode layer of file system.
 
+use super::{
+    block::{BitMap, Dir},
+    read_as, write_as, Block,
+};
 use config::fs::*;
-
-use super::{read_block, write_block};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u16)]
@@ -29,6 +31,45 @@ pub struct Inode {
 }
 
 impl Inode {
+    pub fn root() -> Self {
+        Self::get(ROOTINO).unwrap()
+    }
+
+    /// Allocate a new inode with the given type and major/minor number.
+    pub fn new(typ: FType, major: u16, minor: u16) -> Self {
+        let dinode = DInode {
+            typ,
+            major,
+            minor,
+            nlink: 0,
+            size: 0,
+            addrs: [0; config::fs::NDIRECT + 1],
+        };
+        // Allocate a new inode in bitmap
+        let mut bitmap = Block::read_block(INODE_BITMAP_START);
+        let inum = bitmap.alloc().expect("Inode::new: no inodes");
+        // Write the new inode to disk
+        let inode = Self {
+            dinode,
+            inum,
+            dev: 0,
+            refcnt: 1,
+        };
+        inode.write_back();
+        inode
+    }
+    /// Copy a modified in-memory inode to disk.
+    pub fn free(&mut self) {
+        if self.refcnt == 0 {
+            panic!("freeing free inode");
+        }
+        self.refcnt -= 1;
+        if self.refcnt == 0 {
+            let mut bitmap = Block::read_block(INODE_BITMAP_START);
+            bitmap.set(self.inum, 0);
+        }
+    }
+
     fn calcu_addr(inum: u32) -> (usize, usize) {
         let addr = inum as usize * core::mem::size_of::<DInode>();
         let block_num = addr / BSIZE + INDOE_START;
@@ -36,48 +77,46 @@ impl Inode {
         (block_num, offset)
     }
 
-    pub fn get(num: u32) -> Self {
+    /// Get an inode from disk
+    pub fn get(num: u32) -> Option<Self> {
         let (block_num, offset) = Self::calcu_addr(num);
         // read the block containing the inode
-        let buffer = &mut [0u8; BSIZE];
-        read_block(block_num, buffer);
+        let block = Block::read_block(block_num);
         // read the inode from the buffer
-        let dinode = unsafe { *(buffer.as_ptr().add(offset) as *const DInode) };
-        Self {
+        let dinode = read_as(&block, offset);
+        Some(Self {
             dinode,
             inum: num,
             dev: 0,
             refcnt: 1,
-        }
+        })
     }
 
-    pub fn write(&mut self) {
+    /// Write an inode to disk
+    pub fn write_back(&self) {
         let (block_num, offset) = Self::calcu_addr(self.inum);
         // read the block containing the inode
-        let buffer = &mut [0u8; BSIZE];
-        read_block(block_num, buffer);
+        let mut block = Block::new(block_num);
         // write the inode to the buffer
-        unsafe {
-            *(buffer.as_ptr().add(offset) as *mut DInode) = self.dinode;
-        }
-        // write the buffer back to the disk
-        write_block(block_num, buffer);
+        write_as(&mut block, offset, self.dinode);
     }
 
     /// look for a directory entry in a directory inode
-    pub fn dirlookup(&mut self, _name: &str) -> Option<Inode> {
+    pub fn dirlookup(&self, name: &str) -> Option<Inode> {
         if self.dinode.typ != FType::Dir {
             panic!("dirlookup not DIR");
         }
-        todo!()
+        let block = Block::read_block(self.dinode.addrs[0] as usize);
+        block.dirlookup(name)
     }
 
     /// Write a new directory entry (name, inum) into the directory
-    pub fn dirlink(&mut self, _name: &str, _inum: u32) -> Option<()> {
+    pub fn dirlink(&mut self, name: &str, inum: u32) -> Option<()> {
         if self.dinode.typ != FType::Dir {
             panic!("dirlink not DIR");
         }
-        todo!()
+        let mut block = Block::read_block(self.dinode.addrs[0] as usize);
+        block.dirlink(name, inum)
     }
 }
 

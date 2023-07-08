@@ -2,7 +2,6 @@
 //! Pathname layer of file system.
 
 use super::inode::{FType, Inode};
-use config::fs::ROOTINO;
 
 /// Look up and return the inode for a path name.
 /// If parent is true, return the inode for the parent and copy the final
@@ -12,7 +11,7 @@ fn namex(path: &str, nameiparent: bool) -> Option<(Inode, &str)> {
     let mut name = "";
     // relative path or absolute path
     let mut ip = if path.starts_with('/') {
-        Inode::get(ROOTINO)
+        Inode::root()
     } else {
         todo!("namex: relative path")
     };

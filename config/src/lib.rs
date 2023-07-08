@@ -138,14 +138,17 @@ pub mod fs {
     /// size of disk block cache
     pub const NBUF: u32 = MAXOPBLOCKS * 3;
     /// maximum file path name
-    pub const MAXPATH: usize = 128;
-
+    pub const DIRSIZ: usize = 14;
     pub const NBITMAP: u32 = FSSIZE / BSIZE as u32 + 1;
-
     pub const NDIRECT: usize = 12;
     /// magic number for file system super block
     pub const FS_MAGIC: u32 = 0x10203040;
-
     /// Inode start block
     pub const INDOE_START: usize = 32;
+    /// InodeBitmap start block
+    pub const INODE_BITMAP_START: usize = 42;
+    /// BlockBitmap start block
+    pub const BLOCK_BITMAP_START: usize = 43;
+    /// DataBlock start block
+    pub const DATA_BLOCK_START: usize = 44;
 }
