@@ -1,8 +1,6 @@
 //! Interface for U-Mode standard I/O.
 //! Calls to SYS_READ and SYS_WRITE are handled here.
 
-extern crate alloc;
-
 use alloc::collections::VecDeque;
 
 use crate::console::{CtrlChar, EscapeCode, InputMode};

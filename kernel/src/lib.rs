@@ -11,10 +11,11 @@ global_asm!(include_str!("asm/start.S"));
 global_asm!(include_str!("asm/swtch.S"));
 
 #[macro_use]
-mod context;
+pub mod util;
 #[macro_use]
 pub mod console;
 pub mod allocator;
+mod context;
 pub mod fs;
 pub mod io;
 mod loader;
@@ -30,6 +31,8 @@ pub mod trap;
 extern crate log;
 #[macro_use]
 extern crate lazy_static;
+
+extern crate alloc;
 
 pub use context::{Context, TrapFrame};
 

@@ -1,6 +1,6 @@
 pub(crate) mod graphics;
 pub(crate) mod stdio;
-pub(crate) mod virtio;
+pub mod virtio;
 
-pub use stdio::{STDIN, Stdout, Stdin};
+pub use stdio::{Stdin, Stdout, STDIN};
 pub use virtio::init;
