@@ -32,6 +32,8 @@ extern crate log;
 #[macro_use]
 extern crate lazy_static;
 
+extern crate alloc;
+
 pub use context::{Context, TrapFrame};
 
 pub trait Testable {

@@ -5,36 +5,31 @@
 #![test_runner(kernel::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
-use core::panic::PanicInfo;
-use kernel::{allocator, call, fs, io, load_address, logging, proc, trap};
-
-extern crate alloc;
-
 #[no_mangle]
 #[link_section = ".text.entry"]
 pub extern "C" fn _start() -> ! {
-    load_address!(sp, boot_stack_top);
-    call!(os_main);
+    kernel::load_address!(sp, boot_stack_top);
+    kernel::call!(os_main);
     unreachable!()
 }
 
 #[no_mangle]
+#[rustfmt::skip]
 pub extern "C" fn os_main(hartid: usize, dtb_pa: usize) -> ! {
     #[cfg(test)]
     test_main();
 
-    logging::init();
-    allocator::init();
-    io::init(dtb_pa);
-    trap::init(hartid);
-    log::info!("Initialized hart {}", hartid);
-    fs::init();
-    proc::init();
+    kernel::logging  ::init();
+    kernel::allocator::init();
+    kernel::io       ::init(dtb_pa);
+    kernel::trap     ::init(hartid);
+    kernel::fs       ::init();
+    kernel::proc     ::init();
 }
 
 #[cfg(not(test))]
 #[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
+fn panic(info: &core::panic::PanicInfo) -> ! {
     if let Some(location) = info.location() {
         log::error!(
             "Panicked at {}:{} {}",
@@ -46,11 +41,10 @@ fn panic(info: &PanicInfo) -> ! {
         log::error!("Panicked: {}", info.message().unwrap());
     }
     loop {}
-    // kernel::sbi::shutdown()
 }
 
 #[cfg(test)]
 #[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
+fn panic(info: &core::panic::PanicInfo) -> ! {
     kernel::test_panic_handler(info)
 }

@@ -55,7 +55,7 @@ pub fn do_syscall(context: &mut TrapFrame) {
                                 if cnt > 0 {
                                     break;
                                 }
-                            },
+                            }
                             _ => unsafe {
                                 *buf.add(i) = ch as u8;
                                 cnt += 1;

@@ -29,7 +29,6 @@ pub struct Inode {
 }
 
 impl Inode {
-
     fn calcu_addr(inum: u32) -> (usize, usize) {
         let addr = inum as usize * core::mem::size_of::<DInode>();
         let block_num = addr / BSIZE + INDOE_START;

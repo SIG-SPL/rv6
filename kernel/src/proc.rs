@@ -1,5 +1,3 @@
-extern crate alloc;
-
 use crate::context::{Context, TrapFrame};
 use crate::sync::SpinLock;
 use alloc::vec::Vec;
