@@ -9,12 +9,11 @@
 use core::panic::PanicInfo;
 
 extern crate alloc;
-use kernel::{allocator, virtio};
 
 #[no_mangle]
 pub extern "C" fn os_main(hartid: usize, dtb_pa: usize) -> ! {
-    allocator::init();
-    virtio::init(dtb_pa);
+    kernel::allocator::init();
+    kernel::io::init(dtb_pa);
     test_main();
     loop {}
 }
@@ -44,7 +43,7 @@ fn test_alloc() {
 
 #[test_case]
 fn test_virtio_blk_rw() {
-    use kernel::virtio::block;
+    use kernel::io::virtio::block;
     let mut origin = alloc::vec![0x0; 512];
     let input = alloc::vec![0xffu8; 512];
     let mut output = alloc::vec![0; 512];

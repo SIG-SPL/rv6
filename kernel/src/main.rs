@@ -6,14 +6,6 @@
 #![reexport_test_harness_main = "test_main"]
 
 #[no_mangle]
-#[link_section = ".text.entry"]
-pub extern "C" fn _start() -> ! {
-    kernel::load_address!(sp, boot_stack_top);
-    kernel::call!(os_main);
-    unreachable!()
-}
-
-#[no_mangle]
 #[rustfmt::skip]
 pub extern "C" fn os_main(hartid: usize, dtb_pa: usize) -> ! {
     #[cfg(test)]
