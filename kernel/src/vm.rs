@@ -2,31 +2,56 @@
 
 use config::{layout::*, vm::*};
 
-static mut INIT_PT: PageTable = PageTable::new();
+pub fn init() {
+    extern "C" {
+        fn stext();
+        fn srodata();
+        fn sdata();
+        fn remap_root_pt();
+    }
 
-#[no_mangle]
-#[link_section = ".text.entry"]
-pub fn boot_mmap() {
-    // use riscv::register::satp;
+    use riscv::register::satp;
+
+    let pta = remap_root_pt as usize;
+
+    let stxt_pa = PHY_START + OPENSBI_SIZE;
+    let txt_len = srodata as usize - stext as usize;
+
+    let srod_pa = stxt_pa + txt_len;
+    let rod_len = sdata as usize - srodata as usize;
+
+    let rest_pa = srod_pa + rod_len;
+    let rest_len = PHY_STOP - rest_pa;
 
     kvmmap(
-        unsafe { &mut INIT_PT as *mut PageTable as usize },
-        VM_START,
-        PHY_START,
-        PHY_SIZE,
+        pta,
+        stext as usize,
+        stxt_pa,
+        txt_len,
         2,
-        Privileges::Read as usize | Privileges::Write as usize | Privileges::Execute as usize,
+        Privileges::Read as usize | Privileges::Execute as usize,
     );
-    // write_reg!(sp, read_reg!(sp) + PA2VA_OFFSET);
-    // write_reg!(ra, read_reg!(ra) + PA2VA_OFFSET);
-    // unsafe {
-    //     satp::set(
-    //         satp::Mode::Sv39,
-    //         0,
-    //         &INIT_PT as *const PageTable as usize >> PGSHIFT,
-    //     );
-    //     riscv::asm::sfence_vma(0, 0);
-    // }
+    kvmmap(
+        pta,
+        srodata as usize,
+        srod_pa,
+        rod_len,
+        2,
+        Privileges::Read as usize,
+    );
+    kvmmap(
+        pta,
+        sdata as usize,
+        rest_pa,
+        rest_len,
+        2,
+        Privileges::Read as usize | Privileges::Write as usize,
+    );
+
+    unsafe {
+        satp::set(satp::Mode::Sv39, 0, (pta - PA2VA_OFFSET) >> PGSHIFT);
+        riscv::asm::sfence_vma_all();
+    }
 }
 
 /// Page Table
@@ -40,6 +65,12 @@ impl PageTable {
     const fn new() -> Self {
         Self {
             ent: [PageTableEntry::default(); 512],
+        }
+    }
+
+    pub fn flush() {
+        unsafe {
+            riscv::asm::sfence_vma_all();
         }
     }
 }
@@ -112,10 +143,10 @@ impl PageTableEntry {
 /// Get the page table entry for a virtual address.
 /// - pt: Root Page table
 /// - va: Virtual address
-/// - level: The level of the lowest level page table
-///     - 3-lvl pt: 0
+/// - level: The level of the page table
+///     - 3-lvl pt: 2
 ///     - 2-lvl pt: 1
-///     - 1-lvl pt: 2
+///     - 1-lvl pt: 0
 fn get_pte(pta: usize, va: usize, level: usize) -> usize {
     assert!(level <= 2);
     let pt = unsafe { &mut *(pta as *mut PageTable) };

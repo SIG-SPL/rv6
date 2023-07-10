@@ -5,6 +5,7 @@ use core::{
     sync::atomic::{AtomicUsize, Ordering},
 };
 
+use config::vm::PA2VA_OFFSET;
 use fdt::{node::FdtNode, Fdt};
 use virtio_drivers::{
     transport::{
@@ -224,11 +225,11 @@ extern "C" {
 }
 
 lazy_static! {
-    static ref DMA_PA: AtomicUsize = AtomicUsize::new(ekernel as usize);
+    static ref DMA_PA: AtomicUsize = AtomicUsize::new(ekernel as usize - PA2VA_OFFSET);
 }
 
 fn virt_to_phys(va: usize) -> PhysAddr {
-    va
+    va - PA2VA_OFFSET
 }
 
 #[allow(unused_variables)]
