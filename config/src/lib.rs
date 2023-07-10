@@ -89,29 +89,77 @@ pub mod layout {
     pub const UART0: usize = 10;
     pub const VIRTIO0: usize = 1;
 
-    pub const KERNEL_BASE: usize = 0x80200000;
+    pub const PHY_START: usize = 0x80000000;
+    pub const OPENSBI_SIZE: usize = 0x200000;
+    pub const KERNEL_BASE: usize = PHY_START + OPENSBI_SIZE;
     pub const PHY_SIZE: usize = 128 * 1024 * 1024;
-    pub const PHY_STOP: usize = KERNEL_BASE + PHY_SIZE;
+    pub const PHY_STOP: usize = PHY_START + PHY_SIZE;
 
     pub const KSTACKTOP: usize = PHY_STOP;
     /// Page size 4KB
     pub const PGSIZE: usize = 4 * 1024;
+    pub const PGSHIFT: usize = 12;
     /// Kernel stack size 4KB
     pub const STACKSIZE: usize = PGSIZE;
     /// Kernel Heap size 3MB
     pub const KERNEL_HEAP_SIZE: usize = 0x30_0000;
 
+    #[inline(always)]
     pub fn plic_pri(intr_src: usize) -> usize {
         PLIC_BASE + intr_src * 4
     }
 
+    #[inline(always)]
     pub fn plic_sen(hartid: usize) -> usize {
         PLIC_SENABLE_BASE + hartid * 0x100
     }
 
+    #[inline(always)]
     pub fn plic_spri(hartid: usize) -> usize {
         PLIC_SPRIORITY_BASE + hartid * 0x2000
     }
+}
+
+pub mod vm {
+    use crate::layout::*;
+
+    #[repr(usize)]
+    #[rustfmt::skip]
+    pub enum Privileges {
+        Vaild = 1 << 0,
+        Read  = 1 << 1,
+        Write = 1 << 2,
+        Execute = 1 << 3,
+        User = 1 << 4,
+        Global = 1 << 5,
+        Accessed = 1 << 6,
+        Dirty = 1 << 7,
+    }
+
+    pub const PTE_SHIFT: usize = 10;
+    
+    pub const VM_START: usize = 0xffffffe000000000;
+    pub const VM_END: usize = 0xffffffff00000000;
+    pub const VM_SIZE: usize = VM_END - VM_START;
+    pub const PA2VA_OFFSET: usize = VM_START - PHY_START;
+
+    /// Extract virtual page number from virtual address
+    /// 9 bits for each level
+    #[inline(always)]
+    pub fn vpn(va: usize, shifts: usize) -> usize {
+        (va >> (PGSHIFT + 9 * shifts)) & 0x1ff
+    }
+
+    #[inline(always)]
+    pub fn pagesize(level: usize) -> usize {
+        PGSIZE << (9 * level)
+    }
+
+    #[inline(always)]
+    pub fn page_down(addr: usize, level: usize) -> usize {
+        addr & !(pagesize(level) - 1)
+    }
+
 }
 
 /// Standard input/output/error settings

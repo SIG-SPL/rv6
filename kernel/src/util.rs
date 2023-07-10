@@ -2,6 +2,7 @@
 #[macro_export]
 macro_rules! write_reg {
     ($name:tt, $value:expr) => {
+        #[allow(unused_unsafe)]
         unsafe {
             core::arch::asm!(concat!("mv ", stringify!($name), ", {}"), in(reg) $value);
         }
@@ -14,6 +15,7 @@ macro_rules! read_reg {
     ($name:tt) => {
         {
             let value: usize;
+            #[allow(unused_unsafe)]
             unsafe {
                 core::arch::asm!(concat!("mv {}, ", stringify!($name)), out(reg) value);
             }
