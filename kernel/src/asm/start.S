@@ -37,7 +37,3 @@ boot_pt:
     .zero 8 * 381
     .quad (0x80000 << 10) | 0xF    # map kernel (linear, RWXV)
     .zero 8 * 127
-
-remap_root_pt:
-    .quad 0xF
-    .zero 8 * 512

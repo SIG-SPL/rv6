@@ -151,13 +151,8 @@ pub mod vm {
     }
 
     #[inline(always)]
-    pub fn pagesize(level: usize) -> usize {
-        PGSIZE << (9 * level)
-    }
-
-    #[inline(always)]
-    pub fn page_down(addr: usize, level: usize) -> usize {
-        addr & !(pagesize(level) - 1)
+    pub fn page_down(addr: usize) -> usize {
+        addr & !(PGSIZE - 1)
     }
 }
 
