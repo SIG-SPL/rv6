@@ -27,6 +27,7 @@ pub mod sched;
 mod sync;
 mod syscall;
 pub mod trap;
+pub mod vm;
 
 #[macro_use]
 extern crate log;
