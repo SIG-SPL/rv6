@@ -15,19 +15,18 @@ global_asm!(include_str!("asm/swtch.S"));
 pub mod util;
 #[macro_use]
 pub mod console;
-pub mod allocator;
 mod context;
 pub mod fs;
 pub mod io;
 mod loader;
 pub mod logging;
+pub mod mm;
 pub mod proc;
 pub mod sbi;
 pub mod sched;
 mod sync;
 mod syscall;
 pub mod trap;
-pub mod vm;
 
 #[macro_use]
 extern crate log;

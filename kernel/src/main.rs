@@ -12,11 +12,13 @@ pub extern "C" fn os_main(hartid: usize, dtb_pa: usize) -> ! {
     test_main();
 
     kernel::logging  ::init();
-    kernel::allocator::init();
+    kernel::mm       ::init();
     kernel::io       ::init(dtb_pa);
     kernel::trap     ::init(hartid);
     kernel::fs       ::init();
-    kernel::proc     ::init();
+    loop {}
+    // TODO: User mode page table
+    // kernel::proc     ::init();
 }
 
 #[cfg(not(test))]
