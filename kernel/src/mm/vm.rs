@@ -3,7 +3,7 @@
 use alloc::boxed::Box;
 use config::{layout::*, vm::*};
 
-use crate::allocator::alloc_page;
+use crate::mm::allocator::alloc_page;
 
 lazy_static! {
     static ref ROOT_PT: Box<PageTable> = Box::new(PageTable::new());
