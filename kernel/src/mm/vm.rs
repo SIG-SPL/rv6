@@ -107,7 +107,7 @@ impl PageTableEntry {
 
     #[inline(always)]
     fn is(&self, flag: usize) -> bool {
-        self.bits & (flag as usize) != 0
+        self.bits & flag != 0
     }
 
     /// Extract the physical page number from the PTE.

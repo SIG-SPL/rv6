@@ -16,6 +16,7 @@ pub extern "C" fn os_main(hartid: usize, dtb_pa: usize) -> ! {
     kernel::io       ::init(dtb_pa);
     kernel::trap     ::init(hartid);
     kernel::fs       ::init();
+    #[allow(clippy::empty_loop)]
     loop {}
     // TODO: User mode page table
     // kernel::proc     ::init();
