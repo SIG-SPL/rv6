@@ -128,9 +128,9 @@ impl PageTableEntry {
 /// - pta: Virtual address of the page table
 /// - va: Virtual address to be processed
 /// - level: The level of the page table
-///     - lv3 pt: 2 == Accessing PPN[2]
-///     - lv2 pt: 1 == Accessing PPN[1]
-///     - lv1 pt: 0 == Accessing PPN[0]
+///     - lv3 pt: 2 == Accessing PPN\[2\]
+///     - lv2 pt: 1 == Accessing PPN\[1\]
+///     - lv1 pt: 0 == Accessing PPN\[0\]
 fn get_pte(pta: usize, va: usize, level: usize) -> &'static mut PageTableEntry {
     assert!(level <= 2);
     let pt = unsafe { &mut *(pta as *mut PageTable) };
