@@ -28,41 +28,11 @@ pub fn init() {
     let rest_pa = srod_pa + rod_len;
     let rest_len = PHY_STOP - rest_pa;
 
-    kvmmap(
-        pta,
-        0x0c000000,
-        0x0c000000,
-        0x600000,
-        Privileges::Read as usize | Privileges::Write as usize,
-    );
-    kvmmap(
-        pta,
-        0x10000000,
-        0x10000000,
-        0x8200,
-        Privileges::Read as usize | Privileges::Write as usize,
-    );
-    kvmmap(
-        pta,
-        stext as usize,
-        stxt_pa,
-        txt_len,
-        Privileges::Read as usize | Privileges::Execute as usize,
-    );
-    kvmmap(
-        pta,
-        srodata as usize,
-        srod_pa,
-        rod_len,
-        Privileges::Read as usize,
-    );
-    kvmmap(
-        pta,
-        sdata as usize,
-        rest_pa,
-        rest_len,
-        Privileges::Read as usize | Privileges::Write as usize,
-    );
+    kvmmap(pta, PLIC_BASE, PLIC_BASE, PLIC_MMAP_SIZE, PTE_R | PTE_W);
+    kvmmap(pta, MMIO_BASE, MMIO_BASE, MMIO_MMAP_SIZE, PTE_R | PTE_W);
+    kvmmap(pta, stext as usize, stxt_pa, txt_len, PTE_R | PTE_X);
+    kvmmap(pta, srodata as usize, srod_pa, rod_len, PTE_R);
+    kvmmap(pta, sdata as usize, rest_pa, rest_len, PTE_R | PTE_W);
 
     ROOT_PT.flush();
     info!("Initialized MMU, mode: Sv39, root page table @ 0x{:x}", pta);
@@ -127,16 +97,16 @@ impl PageTableEntry {
     /// - next: The virtual address of the next level page table
     fn link(&mut self, next: usize) {
         let ppn = (next - PA2VA_OFFSET) >> PGSHIFT;
-        self.bits = (ppn << PTE_SHIFT) | Privileges::Vaild as usize;
+        self.bits = (ppn << PTE_SHIFT) | PTE_V;
     }
 
     fn set_pa(&mut self, pa: usize, flag: usize) {
         let ppn = pa >> PGSHIFT;
-        self.bits = (ppn << PTE_SHIFT) | Privileges::Vaild as usize | flag;
+        self.bits = (ppn << PTE_SHIFT) | flag | PTE_V;
     }
 
     #[inline(always)]
-    fn is(&self, flag: Privileges) -> bool {
+    fn is(&self, flag: usize) -> bool {
         self.bits & (flag as usize) != 0
     }
 
@@ -168,7 +138,7 @@ fn get_pte(pta: usize, va: usize, level: usize) -> &'static mut PageTableEntry {
     if level == 0 {
         return pte;
     }
-    if pte.is(Privileges::Vaild) {
+    if pte.is(PTE_V) {
         // query from the next level page table
         get_pte(pte.va(), va, level - 1)
     } else {

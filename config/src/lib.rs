@@ -84,10 +84,14 @@ pub mod layout {
      *
      */
     pub const PLIC_BASE: usize = 0xc000000;
+    pub const PLIC_MMAP_SIZE: usize = 0x600000;
     pub const PLIC_SENABLE_BASE: usize = PLIC_BASE + 0x2080;
     pub const PLIC_SPRIORITY_BASE: usize = PLIC_BASE + 0x201000;
     pub const UART0: usize = 10;
     pub const VIRTIO0: usize = 1;
+
+    pub const MMIO_BASE: usize = 0x10000000;
+    pub const MMIO_MMAP_SIZE: usize = 0x8200;
 
     pub const PHY_START: usize = 0x80000000;
     pub const OPENSBI_SIZE: usize = 0x200000;
@@ -123,18 +127,14 @@ pub mod layout {
 pub mod vm {
     use crate::layout::*;
 
-    #[repr(usize)]
-    #[rustfmt::skip]
-    pub enum Privileges {
-        Vaild = 1 << 0,
-        Read  = 1 << 1,
-        Write = 1 << 2,
-        Execute = 1 << 3,
-        User = 1 << 4,
-        Global = 1 << 5,
-        Accessed = 1 << 6,
-        Dirty = 1 << 7,
-    }
+    pub const PTE_V: usize = 1 << 0;
+    pub const PTE_R: usize = 1 << 1;
+    pub const PTE_W: usize = 1 << 2;
+    pub const PTE_X: usize = 1 << 3;
+    pub const PTE_U: usize = 1 << 4;
+    pub const PTE_G: usize = 1 << 5;
+    pub const PTE_A: usize = 1 << 6;
+    pub const PTE_D: usize = 1 << 7;
 
     pub const PTE_SHIFT: usize = 10;
 
