@@ -11,7 +11,7 @@ use crate::sync::SpinLock;
 use lazy_static::*;
 
 /* File system interface */
-pub use block::{read_as, write_as, Block};
+pub use block::{read_as, write_as, BitMap, Block, Dir, SuperBlock};
 pub use file::File;
 pub use inode::{FType, Inode};
 pub use path::{namei, nameiparent};
@@ -31,8 +31,6 @@ pub fn init() {
     let mut fs = FS.lock();
     fs.init();
 }
-
-use block::SuperBlock;
 
 pub struct FileSystem {
     sb: SuperBlock,

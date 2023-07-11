@@ -11,7 +11,7 @@ use core::panic::PanicInfo;
 extern crate alloc;
 
 #[no_mangle]
-pub extern "C" fn os_main(hartid: usize, dtb_pa: usize) -> ! {
+pub extern "C" fn os_main(_hartid: usize, dtb_pa: usize) -> ! {
     kernel::allocator::init();
     kernel::io::init(dtb_pa);
     test_main();

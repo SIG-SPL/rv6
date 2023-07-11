@@ -41,7 +41,7 @@ impl Inode {
             typ,
             major,
             minor,
-            nlink: 0,
+            nlink: 1,
             size: 0,
             addrs: [0; config::fs::NDIRECT + 1],
         };

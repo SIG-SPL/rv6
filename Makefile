@@ -38,7 +38,7 @@ test:
 fs:
 	@cd mkfs && cargo run fs.img
 	@mv mkfs/fs.img .
-	@ln -s fs.img kernel/fs.img
+	@cp fs.img kernel/fs.img
 
 clean:
 	@rm -r target

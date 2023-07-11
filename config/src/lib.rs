@@ -137,7 +137,7 @@ pub mod vm {
     }
 
     pub const PTE_SHIFT: usize = 10;
-    
+
     pub const VM_START: usize = 0xffffffe000000000;
     pub const VM_END: usize = 0xffffffff00000000;
     pub const VM_SIZE: usize = VM_END - VM_START;
@@ -159,7 +159,6 @@ pub mod vm {
     pub fn page_down(addr: usize, level: usize) -> usize {
         addr & !(pagesize(level) - 1)
     }
-
 }
 
 /// Standard input/output/error settings
@@ -191,6 +190,10 @@ pub mod fs {
     pub const NDIRECT: usize = 12;
     /// magic number for file system super block
     pub const FS_MAGIC: u32 = 0x10203040;
+    /// BootBlock number
+    pub const BOOT_BLOCK_NO: usize = 0;
+    /// SuperBlock number
+    pub const SUPER_BLOCK_NO: usize = 1;
     /// Inode start block
     pub const INDOE_START: usize = 32;
     /// InodeBitmap start block
