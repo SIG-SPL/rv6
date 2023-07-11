@@ -12,7 +12,7 @@ extern crate alloc;
 
 #[no_mangle]
 pub extern "C" fn os_main(_hartid: usize, dtb_pa: usize) -> ! {
-    kernel::allocator::init();
+    kernel::mm::init();
     kernel::io::init(dtb_pa);
     test_main();
     loop {}
