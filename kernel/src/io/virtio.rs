@@ -15,10 +15,13 @@ use virtio_drivers::{
     BufferDirection, Hal, PhysAddr, PAGE_SIZE,
 };
 
+/// Virtual memory should be initialized before calling this function.
 pub fn init(dtb_pa: usize) {
-    info!("DTB physical address @ {:#x}", dtb_pa);
+    // DTB lies in riscv_virt_board.ram, so we add the offset to get va
+    let dtb_va = dtb_pa + PA2VA_OFFSET;
+    info!("Device tree blob @ {:#x}", dtb_va);
     // parse flattened device tree from memory
-    let fdt = unsafe { Fdt::from_ptr(dtb_pa as *const u8).unwrap() };
+    let fdt = unsafe { Fdt::from_ptr(dtb_va as *const u8).unwrap() };
     for node in fdt.all_nodes() {
         // detect virtio-mmio devices by compatible string
         if let Some(compatible) = node.compatible() {
@@ -27,13 +30,13 @@ pub fn init(dtb_pa: usize) {
             }
         }
     }
+    info!("All MMIO devices probed and initialized")
 }
 
 fn virtio_mmio_init(node: FdtNode) {
     if let Some(reg) = node.reg().and_then(|mut r| r.next()) {
         let pa = reg.starting_address as usize;
-        // map the device into kernel address space
-        // we don't have virtual memory yet, so we just map it to the same address
+        // We map MMIO pa to equal va in S mode
         let va = pa;
         // get the device header, validate it and initialize the device
         let header = NonNull::new(va as *mut VirtIOHeader).unwrap();
@@ -236,7 +239,7 @@ fn virt_to_phys(va: usize) -> PhysAddr {
 unsafe impl Hal for HalImpl {
     fn dma_alloc(pages: usize, direction: BufferDirection) -> (PhysAddr, NonNull<u8>) {
         let pa = DMA_PA.fetch_add(pages * PAGE_SIZE, Ordering::SeqCst);
-        let va = NonNull::new(pa as _).unwrap();
+        let va = NonNull::new((pa + PA2VA_OFFSET) as _).unwrap();
         (pa, va)
     }
 

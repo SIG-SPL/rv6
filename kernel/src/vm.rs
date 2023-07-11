@@ -9,6 +9,7 @@ lazy_static! {
     static ref ROOT_PT: Box<PageTable> = Box::new(PageTable::new());
 }
 
+/// Global allocator should be initialized before calling this function.
 pub fn init() {
     extern "C" {
         fn stext();
@@ -27,6 +28,20 @@ pub fn init() {
     let rest_pa = srod_pa + rod_len;
     let rest_len = PHY_STOP - rest_pa;
 
+    kvmmap(
+        pta,
+        0x0c000000,
+        0x0c000000,
+        0x600000,
+        Privileges::Read as usize | Privileges::Write as usize,
+    );
+    kvmmap(
+        pta,
+        0x10000000,
+        0x10000000,
+        0x8200,
+        Privileges::Read as usize | Privileges::Write as usize,
+    );
     kvmmap(
         pta,
         stext as usize,

@@ -13,10 +13,10 @@ pub extern "C" fn os_main(hartid: usize, dtb_pa: usize) -> ! {
 
     kernel::logging  ::init();
     kernel::allocator::init();
+    kernel::vm       ::init();
     kernel::io       ::init(dtb_pa);
     kernel::trap     ::init(hartid);
     kernel::fs       ::init();
-    kernel::vm       ::init();
     loop {}
     // TODO: User mode page table
     // kernel::proc     ::init();
