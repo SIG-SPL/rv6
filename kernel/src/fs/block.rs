@@ -159,12 +159,10 @@ impl BitMap for Block {
 }
 
 pub trait Dir {
-    /// Return the size of the directory used space in bytes.
-    fn size(&self) -> u32;
     /// Look for a directory entry named name in the directory.
-    fn dirlookup(&self, name: &str) -> Option<Inode>;
+    fn dirlookup(&self, name: &str, size: usize) -> Option<Inode>;
     /// Write a new directory entry (name, inum) into the directory.
-    fn dirlink(&mut self, name: &str, inum: u32) -> Option<()>;
+    fn dirlink(&mut self, name: &str, inum: u32, size: usize) -> Option<()>;
 }
 
 #[repr(C)]
@@ -186,14 +184,8 @@ impl DirEntry {
 }
 
 impl Dir for Block {
-    // use first 4 bytes to store size
-    fn size(&self) -> u32 {
-        read_as::<u32>(self, 0)
-    }
-
-    fn dirlookup(&self, path: &str) -> Option<Inode> {
-        let size = self.size() as usize;
-        let mut offset = 4;
+    fn dirlookup(&self, path: &str, size: usize) -> Option<Inode> {
+        let mut offset = 0;
         while offset < size {
             let entry = unsafe { *(self.data.as_ptr().add(offset) as *const DirEntry) };
             if entry.inum == 0 {
@@ -208,12 +200,11 @@ impl Dir for Block {
         None
     }
 
-    fn dirlink(&mut self, name: &str, inum: u32) -> Option<()> {
+    fn dirlink(&mut self, name: &str, inum: u32, size: usize) -> Option<()> {
         if name.len() > DIRSIZ {
             return None;
         }
-        let size = self.size() as usize;
-        let mut offset = 4;
+        let mut offset = 0;
         while offset < size {
             let entry: DirEntry = read_as(self, offset);
             let entry_name = unsafe {

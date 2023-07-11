@@ -58,6 +58,7 @@ impl Inode {
         inode.write_back();
         inode
     }
+
     /// Copy a modified in-memory inode to disk.
     pub fn free(&mut self) {
         if self.refcnt == 0 {
@@ -107,7 +108,7 @@ impl Inode {
             panic!("dirlookup not DIR");
         }
         let block = Block::read_block(self.dinode.addrs[0] as usize);
-        block.dirlookup(name)
+        block.dirlookup(name, self.dinode.size as usize)
     }
 
     /// Write a new directory entry (name, inum) into the directory
@@ -116,7 +117,7 @@ impl Inode {
             panic!("dirlink not DIR");
         }
         let mut block = Block::read_block(self.dinode.addrs[0] as usize);
-        block.dirlink(name, inum)
+        block.dirlink(name, inum, self.dinode.size as usize)
     }
 }
 

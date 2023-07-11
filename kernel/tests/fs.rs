@@ -8,6 +8,7 @@
 
 use config::fs::*;
 use core::panic::PanicInfo;
+use kernel::fs::*;
 
 extern crate alloc;
 
@@ -27,7 +28,6 @@ fn panic(info: &PanicInfo) -> ! {
 
 #[test_case]
 fn test_superblock() {
-    use kernel::fs::*;
     let sb = Block::read_block(SUPER_BLOCK_NO);
     let sb = read_as::<SuperBlock>(&sb, 0);
     assert_eq!(sb.magic, FS_MAGIC);
@@ -41,7 +41,6 @@ fn test_superblock() {
 
 #[test_case]
 fn test_root_inode() {
-    use kernel::fs::*;
     let root = Inode::root();
     assert_eq!(root.inum, ROOTINO);
     assert_eq!(root.dinode.typ, FType::Dir);
@@ -53,4 +52,13 @@ fn test_root_inode() {
     let inode_bitmap = Block::read_block(INODE_BITMAP_START);
     assert_eq!(inode_bitmap.get(ROOTINO), 1);
     assert_eq!(inode_bitmap.get(0), 1);
+}
+
+#[test_case]
+fn test_namei() {
+    // simple test root
+    let inode = namei("/").unwrap();
+    assert_eq!(inode.inum, 1);
+    assert_eq!(inode.dinode.size, 0);
+    // TODO: test more
 }
