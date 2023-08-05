@@ -61,10 +61,8 @@ macro_rules! ret {
 }
 
 #[macro_export]
-/// The value of cpuid is now always 0.
-/// Should be implemented in the future if we want to support multi-core.
 macro_rules! cpuid {
     () => {
-        0
+        read_reg!(tp)
     };
 }

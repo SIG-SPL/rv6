@@ -1,6 +1,7 @@
     .section .text.entry
     .globl _start
 _start:
+    mv tp, a0                   # setup cpuid
     la sp, boot_stack_top
     call relocate
     call os_main
