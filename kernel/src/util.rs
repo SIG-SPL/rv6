@@ -59,3 +59,10 @@ macro_rules! ret {
         }
     };
 }
+
+#[macro_export]
+macro_rules! cpuid {
+    () => {
+        read_reg!(tp)
+    };
+}

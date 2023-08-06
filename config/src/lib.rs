@@ -87,8 +87,6 @@ pub mod layout {
     pub const PLIC_MMAP_SIZE: usize = 0x600000;
     pub const PLIC_SENABLE_BASE: usize = PLIC_BASE + 0x2080;
     pub const PLIC_SPRIORITY_BASE: usize = PLIC_BASE + 0x201000;
-    pub const UART0: usize = 10;
-    pub const VIRTIO0: usize = 1;
 
     pub const MMIO_BASE: usize = 0x10000000;
     pub const MMIO_MMAP_SIZE: usize = 0x8200;
@@ -109,21 +107,34 @@ pub mod layout {
     pub const KERNEL_HEAP_SIZE: usize = 0x30_0000;
 
     #[inline(always)]
-    pub fn plic_pri(intr_src: usize) -> usize {
-        PLIC_BASE + intr_src * 4
+    pub fn plic_pri(intr_src: usize) -> *mut u32 {
+        (PLIC_BASE + intr_src * 4) as *mut u32
     }
 
     #[inline(always)]
-    pub fn plic_sen(hartid: usize) -> usize {
-        PLIC_SENABLE_BASE + hartid * 0x100
+    pub fn plic_sen(hartid: usize) -> *mut u32 {
+        (PLIC_SENABLE_BASE + hartid * 0x100) as *mut u32
     }
 
     #[inline(always)]
-    pub fn plic_spri(hartid: usize) -> usize {
-        PLIC_SPRIORITY_BASE + hartid * 0x2000
+    pub fn plic_spri(hartid: usize) -> *mut u32 {
+        (PLIC_SPRIORITY_BASE + hartid * 0x2000) as *mut u32
     }
 }
 
+pub mod plic {
+    use crate::layout::*;
+
+    pub const PLIC_SCLAIM_BASE: usize = PLIC_BASE + 0x201004;
+
+    pub const PLIC_VIRTIO0: usize = 1;
+    pub const PLIC_UART0: usize = 10;
+
+    #[inline(always)]
+    pub fn plic_sclaim(hartid: usize) -> *mut u32 {
+        (PLIC_SCLAIM_BASE + hartid * 0x2000) as *mut u32
+    }
+}
 pub mod vm {
     use crate::layout::*;
 
